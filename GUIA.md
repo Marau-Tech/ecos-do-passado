@@ -13,7 +13,9 @@ Receita baseada no vídeo "Choose one to spend 24 hours on". Vale tanto para voc
 | Barra de baixo | Legenda digitada letra por letra |
 | Quadro central | Só imagem e OSD (REC, contador, SP). Nenhuma legenda em cima da cena |
 | Filtro VHS | Na tela inteira, barras incluídas |
-| Duração | Cerca de 65s no formato atual: 5s de intro e 15s por item |
+| Duração | Cerca de 74s no formato atual: 5s de intro e 17,25s por item |
+| Narração | **Em todo vídeo.** Voz `bm_lewis` do Kokoro, local, lendo as legendas e o nome de cada planeta |
+| Abertura de cada planeta | Planeta girando com a câmera parada por 2,25s enquanto o narrador diz o nome. Depois vêm o zoom e a explicação |
 | Preview | Obrigatório antes do render final |
 | Legenda do post | `caption.txt` em inglês em todo vídeo, com até 5 hashtags e tendências do dia |
 
@@ -25,6 +27,7 @@ engine/            compartilhado por todos os vídeos
   nature.py        céu, grama, árvores, casas
   post.py          filtro VHS, OSD, barras e legendas
   synth.py         mix de áudio, filtros, efeitos comuns, fita
+  voice.py         narração com Kokoro
   render.py        render de um take
   project.py       caminhos do projeto
 videos/<video>/    tudo que é só daquele vídeo
@@ -39,7 +42,7 @@ out/<video>/       entregas
   preview.mp4      preview, fora do git
   caption.txt      legenda do post, no git
 site/              site do app do TikTok
-tools/             Blender, venv e ffmpeg, fora do git
+tools/             Blender, venv, ffmpeg e modelo de voz, fora do git
 video              comando único do projeto
 setup.sh           reinstala o tools/
 ```
@@ -54,8 +57,6 @@ Repo privado: `Felipe-Meneguzzi/analog-planetas`.
 
 Versionam-se `engine/`, `videos/`, `site/`, `GUIA.md`, `video`, `setup.sh`, `requirements.txt` e os `caption.txt`. Frames, vídeos, áudio e `tools/` ficam de fora pelo `.gitignore`.
 
-Vídeos, áudios e frames ficam como anexos da release `arquivos` do repo, que não pesa no clone. Depois de um render novo, gere os `.tar` de novo e reenvie com `gh release upload arquivos <arquivo> --clobber`.
-
 ### Outro PC
 
 Precisa de Ubuntu 24.04 ou WSL com Python 3.12, além de `gh` logado na conta.
@@ -65,19 +66,34 @@ git clone git@github.com:Felipe-Meneguzzi/analog-planetas.git
 cd analog-planetas
 sudo apt install curl xz-utils python3-venv fonts-dejavu-core libgl1 libsm6 libx11-6 libxext6 libxfixes3 libxi6 libxkbcommon0 libxrender1
 ./setup.sh
-gh release download arquivos -p '*.tar'
-tar xf out-media.tar && tar xf render-frames.tar && rm out-media.tar render-frames.tar
 ```
 
-Sem os frames, refazer um vídeo antigo exige novo render.
+O `setup.sh` já instala a voz: coloca o `kokoro-onnx` no venv e baixa o modelo em `tools/kokoro/`. Veja "Voz do narrador" abaixo.
+
+Isso basta para gerar vídeos novos. Vídeos prontos e frames não vão para o GitHub, então editar um vídeo antigo em outra máquina exige novo render.
 
 O login do TikTok fica em `~/.config/analog-planetas/tiktok.json`, fora do repo. Em outro PC, rode `./video <video> tiktok login`.
 
 `site/` é uma cópia do site do app do TikTok (termos, privacidade e callback), feito para `tiktok.felipemeneguzzi.dev`.
 
+### Voz do narrador
+
+Roda local, na CPU, sem chave e sem custo. São 350 MB de modelo, e a narração de um vídeo leva cerca de 15s.
+
+Para instalar em um projeto que já tem `tools/`, rode `./setup.sh` de novo: ele pula o que já existe. Se precisar baixar à mão:
+
+```bash
+tools/venv/bin/pip install -r requirements.txt
+mkdir -p tools/kokoro && cd tools/kokoro
+curl -LO https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
+curl -LO https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+```
+
+Para testar sem render: `./video <video> build`. O comando imprime o tempo de cada fala.
+
 ### Pendências
 
-- Vídeo 2: assistir com som antes de postar.
+- Vídeo 2: o código e o preview já têm narração, mas o mp4 final é o antigo, de 65s, e não será refeito. O código fica como referência do padrão. Vídeo 1 segue sem narração.
 - TikTok: `./video <video> tiktok` só foi testado contra servidor falso. Falta criar o app no portal, publicar o `site/` e rodar o login.
 - GPU: `engine/lib.py` força o Cycles na CPU. No PC com GTX 1660 o render pode ficar mais rápido, mas isso exige mudar o código.
 
@@ -118,11 +134,14 @@ Criar `videos/<video>/` e definir em `timeline.py`:
 - `PLANETS`: título, subtítulo e primeiro take de cada trecho.
 - `EVENTS`: glitches, com tempo, força e duração.
 - `SUBLIM`: quadros subliminares.
+- `VOICE`: voz, velocidade e o texto falado com o nome de cada planeta.
+- `NAME_HOLD`: segundos do planeta girando antes do zoom, 2,25 no padrão. Somar nas durações dos takes `p1a` a `p4a` e em `SECTION`, e começar a legenda desses takes em `NAME_HOLD + 0.5`.
 - `GRADE`, `END_TEXT`, `INTRO_LABELS`, `SECTION` e `frame_fx`: cor por trecho, tela final, números da intro, duração do trecho e efeito extra por frame.
 
 O formato que funcionou:
 
 - Abrir com a pergunta e todas as opções na tela.
+- Em cada planeta, deixar ele girando enquanto o narrador diz o nome. Só depois vêm o zoom e a explicação.
 - Mostrar cada opção em 4 takes de 3,5 a 4s, do mais distante para o mais próximo.
 - Fechar cada trecho com uma frase que vira a chave ("No visitor ever wanted to go back.").
 - Variar o tom entre as opções, porque o contraste assusta mais que quatro monstros seguidos.
@@ -130,9 +149,18 @@ O formato que funcionou:
 
 Legendas curtas: até 2 linhas de cerca de 26 caracteres, com frases secas no presente.
 
+A narração sai do texto das legendas. O `voice.py` acelera a fala só o necessário para caber antes da próxima, até 1,25x, e o `build` imprime o tempo de cada fala. A trilha abaixa enquanto o narrador fala. Um vídeo sem `VOICE` no `timeline.py` sai sem narração.
+
 ### 2. Cenas
 
 Um arquivo por trecho, com uma função `build_<take>()` por take e um dicionário `SHOTS` com as durações. Os takes se chamam `intro` e `p1a` a `p4d`: o módulo sai do nome do take.
+
+Nos takes de planeta, a primeira linha do `update` segura o zoom até o nome terminar:
+
+```python
+def update(t, u):
+    u = zoom_after(t, NAME_HOLD, SHOTS['p1a'])
+```
 
 Como o quadro central é 4:3, o enquadramento atual já serve. Se um vídeo novo usar a tela vertical inteira, a câmera e o `RES` precisam mudar antes do render.
 
@@ -142,7 +170,7 @@ Como o quadro central é 4:3, o enquadramento atual já serve. Se um vídeo novo
 ./video <video> preview
 ```
 
-Renderiza 5 frames por take com 6 samples e monta com legendas, filtro e áudio, como uma animação quadro a quadro. O preview mostra enquadramento, cores, ritmo e texto. O movimento e os detalhes finos só aparecem no render final.
+Renderiza 5 frames por take com 6 samples e monta com legendas, filtro, narração e áudio, como uma animação quadro a quadro. O preview mostra enquadramento, cores, ritmo e texto. O movimento e os detalhes finos só aparecem no render final.
 
 Só seguir para a etapa 4 depois da sua aprovação.
 
