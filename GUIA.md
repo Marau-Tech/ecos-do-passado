@@ -53,13 +53,13 @@ Regra de reaproveitamento: o que servir para mais de um vídeo vai para `engine/
 
 ### Git
 
-Repo privado: `Felipe-Meneguzzi/analog-planetas`.
+Repo público: `Felipe-Meneguzzi/analog-planetas`.
 
 Versionam-se `engine/`, `videos/`, `site/`, `GUIA.md`, `video`, `setup.sh`, `requirements.txt` e os `caption.txt`. Frames, vídeos, áudio e `tools/` ficam de fora pelo `.gitignore`.
 
 ### Outro PC
 
-Precisa de Ubuntu 24.04 ou WSL com Python 3.12, além de `gh` logado na conta.
+Precisa de Ubuntu 24.04 ou WSL com Python 3.12.
 
 ```bash
 git clone git@github.com:Felipe-Meneguzzi/analog-planetas.git
