@@ -1,0 +1,6 @@
+tools/
+render/
+out/**/*.mp4
+out/**/*.wav
+out/**/stills/
+__pycache__/
