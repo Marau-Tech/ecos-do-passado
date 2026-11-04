@@ -15,7 +15,7 @@ add(sum(np.sin(2 * np.pi * f * T + p) * a for f, a, p in ((49, 1, 0), (49.4, .9,
 # ---- P1 THE FEAST: órgão morno, caixinha afinada, talheres ----
 e = seg(t1, t2, 0.6)
 prog = [(261.6, 329.6, 392.0), (220.0, 261.6, 329.6), (174.6, 220.0, 261.6), (196.0, 246.9, 293.7)]
-for i in range(8):
+for i in range(int((t2 - t1) / 1.875) + 1):
     a = t1 + i * 1.875
     ch = prog[i % 4]
     add(chord(ch) * seg(a, a + 1.95, 0.25) * e, 0.055)

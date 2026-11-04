@@ -1,7 +1,8 @@
 from lib import *
 from planets import *
+from timeline import NAME_HOLD
 
-SHOTS = {'p4a': 4.0, 'p4b': 3.5, 'p4c': 3.75, 'p4d': 3.75}
+SHOTS = {'p4a': 6.25, 'p4b': 3.5, 'p4c': 3.75, 'p4d': 3.75}
 
 ROBE = [(0.30, 0), (0.27, 0.45), (0.24, 0.9), (0.25, 1.35), (0.13, 1.46), (0.055, 1.5), (0.055, 1.56),
         (0.11, 1.6), (0.125, 1.7), (0.115, 1.8), (0.07, 1.87), (0.0, 1.89)]
@@ -82,6 +83,7 @@ def build_p4a():
     p.rotation_euler = (0.3, -0.2, 0)
     cam = camera((0, -3.6, 0), (0, 0, 0), 40)
     def update(t, u):
+        u = zoom_after(t, NAME_HOLD, SHOTS['p4a'])
         p.rotation_euler.z = 0.06 * t
         d = lerp(3.5, 1.32, ease(u))
         cam.location = (0.2 * (1 - u) - 0.25 * u, -d, 0.15 + 0.1 * u)

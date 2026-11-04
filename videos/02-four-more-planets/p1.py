@@ -1,8 +1,9 @@
 from lib import *
 from planets import *
 from nature import tree
+from timeline import NAME_HOLD
 
-SHOTS = {'p1a': 3.75, 'p1b': 3.75, 'p1c': 3.5, 'p1d': 4.0}
+SHOTS = {'p1a': 6.0, 'p1b': 3.75, 'p1c': 3.5, 'p1d': 4.0}
 
 def sky_gold():
     w = bpy.context.scene.world; nt = w.node_tree; nt.nodes.clear()
@@ -144,6 +145,7 @@ def build_p1a():
     p.rotation_euler = (0.35, -0.2, 0)
     cam = camera((0, -3.6, 0), (0, 0, 0), 40)
     def update(t, u):
+        u = zoom_after(t, NAME_HOLD, SHOTS['p1a'])
         p.rotation_euler.z = 0.8 + 0.12 * t
         cam.location = vlerp((0.3, -3.6, 0.2), (0.12, -2.5, 0.05), ease(u))
         look(cam, (0.05, 0, 0))

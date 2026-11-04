@@ -1,7 +1,8 @@
 from lib import *
 from planets import *
+from timeline import NAME_HOLD
 
-SHOTS = {'p3a': 3.75, 'p3b': 3.75, 'p3c': 3.5, 'p3d': 4.0}
+SHOTS = {'p3a': 6.0, 'p3b': 3.75, 'p3c': 3.5, 'p3d': 4.0}
 
 def waves(X, Y, t, a=1.0):
     z = np.zeros_like(X)
@@ -107,6 +108,7 @@ def build_p3a():
     p.rotation_euler = c.rotation_euler = (0.3, -0.2, 0)
     cam = camera((0, -3.6, 0), (0, 0, 0), 40)
     def update(t, u):
+        u = zoom_after(t, NAME_HOLD, SHOTS['p3a'])
         p.rotation_euler.z = 0.1 * t
         c.rotation_euler.z = 0.16 * t
         cam.location = vlerp((0.25, -3.6, 0.3), (0.1, -2.55, 0.1), ease(u))

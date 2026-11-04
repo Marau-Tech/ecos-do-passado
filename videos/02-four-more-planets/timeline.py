@@ -1,21 +1,22 @@
 # (shot, duração, legendas [(início, fim, texto)])
 FPS_SRC = 15
 FPS_OUT = 30
+NAME_HOLD = 2.25               # planeta girando enquanto o narrador diz o nome, antes do zoom
 SHOTS = [
  ('intro', 5.0,  [(0.3, 5.0, 'Choose one. You stay for 24 hours.')]),
- ('p1a', 3.75, [(0.5, 3.75, 'Every inch of this planet is edible.')]),
+ ('p1a', 6.0, [(NAME_HOLD + 0.5, 6.0, 'Every inch of this planet is edible.')]),
  ('p1b', 3.75, [(0.2, 3.75, 'The table is always set.')]),
  ('p1c', 3.5,  [(0.2, 3.5,  'The rivers run with warm honey.')]),
  ('p1d', 4.0,  [(0.1, 2.1,  'Take a bite. It grows back.'), (2.1, 4.0, 'There is no catch.')]),
- ('p2a', 3.5,  [(0.5, 3.5,  'Just trees, from pole to pole.')]),
+ ('p2a', 5.75, [(NAME_HOLD + 0.5, 5.75, 'Just trees, from pole to pole.')]),
  ('p2b', 4.0,  [(0.2, 4.0,  'No monsters. No trails either.')]),
  ('p2c', 3.5,  [(0.2, 3.5,  'Water is easy. Food is on you.')]),
  ('p2d', 4.0,  [(0.1, 2.1,  'The nights get cold.'), (2.1, 4.0, 'You will make it. Barely.')]),
- ('p3a', 3.75, [(0.5, 3.75, 'There is no land here.')]),
+ ('p3a', 6.0, [(NAME_HOLD + 0.5, 6.0, 'There is no land here.')]),
  ('p3b', 3.75, [(0.2, 3.75, 'You get one raft. Nothing else.')]),
  ('p3c', 3.5,  [(0.2, 3.5,  'That pale shape below is not the seabed.')]),
  ('p3d', 4.0,  [(0.1, 2.0,  'It is a hand.'), (2.0, 4.0, 'And it just felt you land.')]),
- ('p4a', 4.0,  [(0.5, 4.0,  'Those pale specks are not rocks.')]),
+ ('p4a', 6.25, [(NAME_HOLD + 0.5, 6.25, 'Those pale specks are not rocks.')]),
  ('p4b', 3.5,  [(0.2, 3.5,  'They are people. Billions of them.')]),
  ('p4c', 3.75, [(0.2, 3.75, 'All standing still. All facing away.')]),
  ('p4d', 3.75, [(0.1, 1.2,  'Then you breathe.'), (1.2, 3.05, 'They are practicing your face.')]),
@@ -45,9 +46,16 @@ EVENTS.append((END_CARD - 0.25, 1.0, 0.33))
 SUBLIM = [(START['p2d'] + 3.55, 'p4d', 40), (START['p3c'] + 2.9, 'p4d', 45)]
 SUBLIM_GRADE = 'p4'
 
-SECTION = 15.0                  # duração de cada trecho, usada no contador
+SECTION = 15.0 + NAME_HOLD       # duração de cada trecho, usada no contador
 END_TEXT = 'CHOOSE.'
 INTRO_LABELS = [((88, 228), '1'), ((872, 212), '2'), ((96, 492), '3'), ((880, 482), '4')]
+
+VOICE = {
+    'voice': 'bm_lewis', 'lang': 'en-gb', 'speed': 0.95,
+    'name_at': 0.35,            # quando o nome começa, dentro do take do planeta
+    'names': {'p1a': 'Planet one. The Feast.', 'p2a': 'Planet two. The Woods.',
+              'p3a': 'Planet three. The Deep.', 'p4a': 'Planet four. The Crowd.'},
+}
 
 GRADE = {  # saturação, contraste, tint RGB, lift
  'intro': (0.85, 1.05, (1.0, 0.98, 1.0), 0.02),

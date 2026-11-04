@@ -1,8 +1,9 @@
 from lib import *
 from planets import *
 from nature import grass
+from timeline import NAME_HOLD
 
-SHOTS = {'p2a': 3.5, 'p2b': 4.0, 'p2c': 3.5, 'p2d': 4.0}
+SHOTS = {'p2a': 5.75, 'p2b': 4.0, 'p2c': 3.5, 'p2d': 4.0}
 FERN = ((0.07, 0.20, 0.05), (0.12, 0.32, 0.08), (0.24, 0.40, 0.10))
 
 def soil(x, y):
@@ -91,6 +92,7 @@ def build_p2a():
     p.rotation_euler = c.rotation_euler = (0.35, -0.2, 0)
     cam = camera((0, -3.6, 0), (0, 0, 0), 40)
     def update(t, u):
+        u = zoom_after(t, NAME_HOLD, SHOTS['p2a'])
         p.rotation_euler.z = 1.2 + 0.1 * t
         c.rotation_euler.z = 1.2 + 0.14 * t
         cam.location = vlerp((-0.3, -3.6, 0.15), (-0.12, -2.6, 0.05), ease(u))
