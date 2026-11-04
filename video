@@ -1,0 +1,56 @@
+#!/bin/bash
+# uso: ./video <pasta-em-videos> <comando> [argumentos]
+#   preview [shots]   render rápido e monta out/<video>/preview.mp4
+#   final [shots]     render completo e monta out/<video>/<video>.mp4
+#   build             só áudio, pós e montagem (PREVIEW=1 usa os frames do preview)
+#   status            frames prontos do render final
+#   still 7 33.8      frames de conferência, em segundos, em out/<video>/stills
+#   sheet out.png p1a/0 p1b/14   folha de contato com frames do render
+#   tiktok [login]    envia o vídeo para os rascunhos do TikTok (PREVIEW=1 envia o preview)
+set -e
+cd "$(dirname "$(readlink -f "$0")")"
+[ $# -ge 2 ] && [ -d "videos/$1" ] || { sed -n 2,9p "$0"; ls videos; exit 1; }
+export VIDEO="$1" PYTHONPATH=engine
+cmd="$2"; shift 2
+PY=tools/venv/bin/python
+CORES=$(nproc); THREADS=$((CORES / 2))
+
+shots() {
+  if [ $# -gt 0 ]; then printf '%s\n' "$@"
+  else $PY -c "import project, timeline; print(*[s[0] for s in timeline.SHOTS], sep='\n')"; fi
+}
+expected() {
+  $PY -c "import project, timeline; print(sum(round(s[1] * timeline.FPS_SRC) for s in timeline.SHOTS))"
+}
+done_frames() { find "render/$VIDEO/final" -name '*.png' 2>/dev/null | wc -l; }
+render() {
+  mode="$1"; shift
+  mkdir -p "render/$VIDEO"; : > "render/$VIDEO/log.txt"
+  shots "$@" | xargs -P 2 -I{} bash -c \
+    "tools/blender/blender -b -t $THREADS -P engine/render.py -- {} $mode 2>&1 | grep --line-buffered -E '^\[|Error|Traceback' >> render/$VIDEO/log.txt || true"
+  if grep -qE 'Error|Traceback' "render/$VIDEO/log.txt"; then
+    echo "Há erros em render/$VIDEO/log.txt"; grep -E 'Error|Traceback' "render/$VIDEO/log.txt" | tail -5; exit 1
+  fi
+}
+build() {
+  name="$VIDEO"; [ "$PREVIEW" = 1 ] && name=preview
+  $PY "videos/$VIDEO/audio.py"
+  JOBS=${JOBS:-$((CORES - 1))} $PY engine/post.py
+  tools/ffmpeg -y -loglevel error -i "out/$VIDEO/video_mudo.mp4" -i "out/$VIDEO/audio.wav" -c:v copy \
+    -c:a aac -b:a 192k -shortest -movflags +faststart "out/$VIDEO/$name.mp4"
+  rm "out/$VIDEO/video_mudo.mp4"
+  echo "pronto: out/$VIDEO/$name.mp4"
+}
+
+case "$cmd" in
+  preview) export PREVIEW=1; render preview "$@"; build ;;
+  final)   render all "$@"
+           [ "$(done_frames)" -eq "$(expected)" ] || { echo "Faltam frames: $(done_frames)/$(expected)"; exit 1; }
+           build ;;
+  build)   build ;;
+  status)  echo "$(done_frames)/$(expected) frames" ;;
+  still)   $PY engine/post.py still "$@" ;;
+  sheet)   $PY engine/sheet.py "$@" ;;
+  tiktok)  $PY engine/tiktok.py "$@" ;;
+  *)       sed -n 2,9p "$0"; exit 1 ;;
+esac
