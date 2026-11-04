@@ -1,5 +1,5 @@
 #!/bin/bash
-# Instala Blender portátil, venv e ffmpeg em tools/. Os pacotes do sistema estão no GUIA.md, em "Outro PC".
+# Instala Blender portátil, venv, ffmpeg e o modelo de voz em tools/. Os pacotes do sistema estão no GUIA.md, em "Outro PC".
 set -e
 cd "$(dirname "$(readlink -f "$0")")"
 BLENDER=4.5.15
@@ -11,4 +11,9 @@ fi
 [ -d tools/venv ] || python3 -m venv tools/venv
 tools/venv/bin/pip install -q -r requirements.txt
 ln -sf "$(tools/venv/bin/python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())')" tools/ffmpeg
+KOKORO=https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0
+mkdir -p tools/kokoro
+for f in kokoro-v1.0.onnx voices-v1.0.bin; do
+  [ -f "tools/kokoro/$f" ] || curl -L -o "tools/kokoro/$f" "$KOKORO/$f"
+done
 echo ok

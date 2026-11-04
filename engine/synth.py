@@ -52,6 +52,15 @@ def tape(x):
     y = lp(hp(y, 28), 8200)
     return np.tanh(y * 1.25)
 
+def narrate(L, R):
+    """abaixa a trilha enquanto o narrador fala e soma a voz depois da fita"""
+    import voice
+    v, spans = voice.track(N, SR)
+    duck = np.clip(sum(seg(a - 0.1, b + 0.15, 0.1) for a, b in spans), 0, 1)
+    bed = 1 - 0.55 * duck
+    L, R = L * bed + v * 0.6, R * bed + v * 0.6
+    return np.stack([L, R]) / max(1.0, max(np.abs(L).max(), np.abs(R).max()) / 0.95)
+
 def finish():
     """bipes de legenda, estática, tom final, fita e gravação"""
     # ---- bipes de legenda e estática dos glitches ----
@@ -74,6 +83,8 @@ def finish():
 
     L, R = tape(mixL), tape(mixR)
     pk = max(np.abs(L).max(), np.abs(R).max()); L, R = L / pk * 0.89, R / pk * 0.89
+    if 'VOICE' in globals():
+        L, R = narrate(L, R)
     wavfile.write(f'{OUT}/audio.wav', SR, (np.stack([L, R], 1) * 32767).astype(np.int16))
     print('ok', TOTAL, 's  pico', pk, ' rms', np.sqrt((L ** 2).mean()))
     for name, dur, _ in SHOTS:

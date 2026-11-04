@@ -359,6 +359,10 @@ def facing(pos, target):
     d = np.asarray(target, np.float32)[:2] - np.asarray(pos, np.float32)[:, :2]
     return np.arctan2(d[:, 0], -d[:, 1])
 
+def zoom_after(t, hold, dur):
+    """progresso 0..1 de um movimento que só começa depois de hold segundos"""
+    return min(1.0, max(0.0, (t - hold) / (dur - hold)))
+
 # ---------- render ----------
 def render_shot(name, update, dur, frames=None, res=None, samples=None):
     s = bpy.context.scene
