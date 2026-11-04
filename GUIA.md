@@ -76,6 +76,49 @@ O login do TikTok fica em `~/.config/analog-planetas/tiktok.json`, fora do repo.
 
 `site/` é uma cópia do site do app do TikTok (termos, privacidade e callback), feito para `tiktok.felipemeneguzzi.dev`.
 
+### Testar o PC novo
+
+Fazer antes do primeiro render em um PC novo. O objetivo é descobrir o que o PC acessa e o que renderiza mais rápido.
+
+**1. Ver o que o PC acessa:**
+
+```bash
+nproc                        # núcleos disponíveis
+free -g                      # RAM disponível; no WSL costuma ser metade da real
+nvidia-smi                   # GPU, driver e VRAM; se falhar, a GPU não está acessível
+tools/blender/blender -b --python-expr "import bpy; p = bpy.context.preferences.addons['cycles'].preferences; [print(t, [d.name for d in p.get_devices_for_type(t)]) for t in ('CUDA', 'OPTIX')]"
+```
+
+No WSL, a GPU depende do driver NVIDIA instalado no Windows. Não instale driver dentro do WSL.
+
+**2. Medir a CPU.** Rodar um take leve e um pesado, com a qualidade do render final:
+
+```bash
+export VIDEO=02-four-more-planets
+tools/blender/blender -b -t $(($(nproc) / 2)) -P engine/render.py -- p1b 0,25,50 20 | grep '^\['
+tools/blender/blender -b -t $(($(nproc) / 2)) -P engine/render.py -- p4c 0,25,50 20 | grep '^\['
+```
+
+O comando imprime os segundos por frame e grava em `render/<video>/final/`. Apague esses frames depois do teste.
+
+**3. Medir a GPU.** Se ela apareceu no passo 1, pedir ao Claude para ligar a GPU no `reset()` do `engine/lib.py` e repetir os mesmos comandos. Hoje o `c.device = 'CPU'` está fixo, e o `read_factory_settings` apaga as preferências, então o dispositivo precisa ser escolhido depois dele. Ignore o primeiro frame, porque ele inclui a preparação da GPU.
+
+**4. Comparar.** A CPU roda 2 Blenders ao mesmo tempo, então divida o tempo dela por 2. A GPU roda 1 só: nesse caso, trocar o `-P 2` do `render()` no `./video` para `-P 1`.
+
+| Resultado | Decisão |
+|---|---|
+| GPU não aparece no passo 1 | Ficar na CPU |
+| GPU falha por falta de VRAM em algum take | Ficar na CPU, ou usar a GPU só nos takes leves |
+| GPU menos de 30% mais rápida | Ficar na CPU, que é o caminho já testado |
+| GPU 30% mais rápida ou mais | Usar a GPU |
+
+Comparar também um frame de cada, porque o resultado visual precisa ser o mesmo. Anotar a decisão e os tempos na tabela abaixo.
+
+| PC | CPU | GPU | Tempo por frame | Usa |
+|---|---|---|---|---|
+| Principal | i5-12400F, 12 threads | GT 610, não serve para o Cycles | Cerca de 4,5s por frame, com 2 Blenders | CPU |
+| Secundário | i3 10ª geração | GTX 1660 | Falta testar | Falta testar |
+
 ### Voz do narrador
 
 Roda local, na CPU, sem chave e sem custo. São 350 MB de modelo, e a narração de um vídeo leva cerca de 15s.
@@ -95,7 +138,7 @@ Para testar sem render: `./video <video> build`. O comando imprime o tempo de ca
 
 - Vídeo 2: o código e o preview já têm narração, mas o mp4 final é o antigo, de 65s, e não será refeito. O código fica como referência do padrão. Vídeo 1 segue sem narração.
 - TikTok: `./video <video> tiktok` só foi testado contra servidor falso. Falta criar o app no portal, publicar o `site/` e rodar o login.
-- GPU: `engine/lib.py` força o Cycles na CPU. No PC com GTX 1660 o render pode ficar mais rápido, mas isso exige mudar o código.
+- PC secundário: fazer o teste de "Testar o PC novo" antes do primeiro render.
 
 ## Comandos
 
