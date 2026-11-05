@@ -1,4 +1,4 @@
-"""Narração: lê as legendas e os nomes dos planetas com o Kokoro, que roda local na CPU."""
+"""Narração: lê as legendas e os nomes em VOICE['names'] com o Kokoro, que roda local na CPU."""
 import numpy as np
 from kokoro_onnx import Kokoro
 from scipy.signal import butter, resample_poly, sosfilt
@@ -54,6 +54,25 @@ def radio_voice(x, sr):
     return x / np.abs(x).max()
 
 
+def broadcast_voice(x, sr):
+    """Voz de TV: faixa larga de transmissão, comprimida, sem a oscilação da fita."""
+    x = sosfilt(butter(2, [160, 6200], 'band', fs=sr, output='sos'), x)
+    x = np.tanh(1.8 * x / np.abs(x).max())
+    return x / np.abs(x).max()
+
+
+def process(x, xsr, sr, text):
+    """Passa a fala pelo efeito do VOICE['fx']: tape (padrão), radio ou broadcast."""
+    fx = VOICE.get('fx', 'tape')
+    if fx == 'broadcast':
+        y = broadcast_voice(resample_poly(x, sr, xsr), sr)
+    else:
+        y = tape_voice(x, xsr, sr)
+    if fx == 'radio' or text in VOICE.get('radio', ()):
+        y = radio_voice(y, sr)
+    return y
+
+
 def track(n, sr):
     """Devolve a faixa mono da voz e os trechos (início, fim) em que há fala."""
     k = Kokoro(f'{MODEL}/kokoro-v1.0.onnx', f'{MODEL}/voices-v1.0.bin')
@@ -66,9 +85,7 @@ def track(n, sr):
         size = len(x) / xsr
         flag = '' if size <= window else '  PASSA DA JANELA'
         print(f'{t0:6.2f}s  {size:.2f}/{window:.2f}s  x{speed:.2f}  {text}{flag}')
-        y = tape_voice(np.asarray(x, float), xsr, sr)
-        if text in VOICE.get('radio', ()):
-            y = radio_voice(y, sr)
+        y = process(np.asarray(x, float), xsr, sr, text)
         i = int(t0 * sr)
         j = min(n, i + len(y))
         v[i:j] += y[:j - i]
