@@ -8,10 +8,18 @@ Este guia vale para qualquer vídeo. O que é de um formato específico fica no 
 |---|---|---|
 | `choose_planet` | "Choose one": 4 planetas, 24 horas, tela final "CHOOSE." | [`modelos/choose_planet/GUIA.md`](modelos/choose_planet/GUIA.md) |
 | `cctv` | Câmera de segurança sem narrador, de 40 a 120s | [`modelos/cctv/GUIA.md`](modelos/cctv/GUIA.md) |
+| `binary` | "Pick one": 2 opções ruins, de 20 a 35s, tela final "PICK." | [`modelos/binary/GUIA.md`](modelos/binary/GUIA.md) |
+| `probe_feed` | Imagens de sonda chegando linha a linha, sem narrador, de 30 a 60s | [`modelos/probe_feed/GUIA.md`](modelos/probe_feed/GUIA.md) |
+| `eas` | Alerta de emergência na TV, com voz robótica, de 25 a 75s | [`modelos/eas/GUIA.md`](modelos/eas/GUIA.md) |
+| `weather` | Previsão do tempo da TV local, de 35 a 75s | [`modelos/weather/GUIA.md`](modelos/weather/GUIA.md) |
+| `rules` | Filme de segurança dos anos 80 com regras numeradas, de 40 a 80s | [`modelos/rules/GUIA.md`](modelos/rules/GUIA.md) |
+| `glimpse` | Vislumbre sem texto e sem voz, em loop, de 6 a 15s | [`modelos/glimpse/GUIA.md`](modelos/glimpse/GUIA.md) |
+
+Os modelos `binary` a `glimpse` vieram da pesquisa de tendências de novembro de 2026 e ainda não têm vídeo. O primeiro vídeo de cada um valida o guia: o que não funcionar no preview volta para o guia do modelo.
 
 Separação:
 
-- **`engine/` é o estilo:** render, filtro VHS, OSD, barras, legendas, glitches, trilha, fita e narração. Vale para todo modelo.
+- **`engine/` é o estilo:** render, filtros, OSD, barras, legendas, glitches, desenho 2D, trilha, fita e narração. Vale para todo modelo.
 - **`modelos/<modelo>/` é o formato:** o que aparece nas barras, o contador, a abertura, a tela final e as regras do roteiro.
 - **`videos/<video>/` é o conteúdo:** falas, cenas, cores e trilha daquele vídeo.
 
@@ -22,8 +30,9 @@ Separação:
 
 | Função | O que define | Padrão |
 |---|---|---|
-| `LOOK` | Filtro da imagem: `vhs` ou `cctv` | `vhs` |
-| `rec_label` | Texto ao lado da luz de gravação | `REC` |
+| `LOOK` | Filtro da imagem (tabela abaixo) | `vhs` |
+| `REC_DOT` | Luz vermelha de gravação no OSD | `True` |
+| `rec_label` | Texto do canto superior esquerdo do OSD. `None` não mostra nada | `REC` |
 | `counter` | Texto do canto superior direito do OSD | Nada |
 | `footer` | Texto do canto inferior esquerdo do OSD | Tempo da fita |
 | `title` | Título e subtítulo da barra de cima | Barra vazia |
@@ -32,11 +41,40 @@ Separação:
 | `labels` | Rótulos em cima da imagem | Nenhum |
 | `grade_key` | Chave de `GRADE` do take | O nome do take |
 | `scene_module` | Arquivo que tem `build_<take>()` | O nome do take |
+| `drawn` | Se o take é desenhado em 2D, sem Blender | Takes em `DRAWN` |
+| `card` | Imagem de um take desenhado | `draw_<take>(rt)` do `cards.py` do vídeo |
+| `paint` | Desenho por cima de um take, antes do OSD | `paint_<take>(img, rt)` do `cards.py`, se existir |
+
+Para a duração, `bounded(shots, tela_final, mínimo, máximo, nome)` faz o `timing` e recusa vídeo fora da faixa do modelo. `shot_of(tl, t)` diz o take que está na tela, para o contador.
 
 3. Criar `modelos/<nome>/GUIA.md` com as regras do formato: abertura, estrutura, duração e o que o roteiro precisa trazer.
 4. Acrescentar o modelo na tabela acima.
 
-Esse arquivo roda também dentro do Blender, então não pode importar PIL nem scipy.
+Esse arquivo roda também dentro do Blender, então não pode importar PIL nem scipy. O desenho 2D de um modelo fica em `modelos/<nome>/draw.py` e só é importado dentro de `card` e `paint`, que nunca rodam no Blender.
+
+### Filtros
+
+| `LOOK` | Imagem | No glitch | Modelos |
+|---|---|---|---|
+| `vhs` | Fita: croma borrado, tracking, head switching | Neve, rolagem, faixas | `choose_planet`, `binary`, `rules` |
+| `cctv` | Câmera de segurança: monocromática, granulada, 15 fps | Blocos corrompidos, perda de sinal | `cctv` |
+| `broadcast` | TV de antena: fantasma, chuvisco fino, barra de zumbido | Rasga, rola e vira chuvisco | `eas`, `weather` |
+| `webcam` | Webcam dos anos 2000: pouca resolução, blocos, cor em 5 bits, 10 fps | Blocos arrastados | `glimpse` |
+| `probe` | Monitor de missão: 6 bits, erros de bit, fósforo | Pacotes perdidos | `probe_feed` |
+
+Um vídeo pode trocar o filtro do modelo com `LOOK = '...'` no `timeline.py`. Os filtros ficam em `engine/looks.py`.
+
+### Takes desenhados
+
+Um take desenhado não passa pelo Blender: o post desenha a imagem dele em 2D a cada frame, a 960x720. Serve para telas de texto, cartelas, mapas e gráficos, e custa quase nada no render. O `./video` pula esses takes no render e na contagem de frames.
+
+- O modelo pode desenhar takes próprios, como a tela de alerta do `eas` ou a cartela de regra do `rules`.
+- O vídeo desenha os seus em `videos/<video>/cards.py`, com `draw_<take>(rt)`, e lista esses takes em `DRAWN` no `timeline.py`.
+- `paint_<take>(img, rt)` no `cards.py` desenha por cima de um take renderizado, como um rótulo que acompanha o tempo.
+- Take desenhado não passa pelo `GRADE` nem pelo `frame_fx`: a cor que sai do desenho é a final. O filtro e o glitch valem igual.
+- `SUBLIM` aceita take desenhado, com o frame contado a 15 fps.
+- `engine/gfx.py` tem o que se repete: fontes, texto digitado, parágrafo, letreiro, barras de cor, chuvisco, contagem de filme e ícones de tempo.
+- O OSD fica em y < 70 e y > 610 do quadro. Deixe essas faixas livres no desenho.
 
 ## Regras fixas
 
@@ -50,7 +88,7 @@ Esse arquivo roda também dentro do Blender, então não pode importar PIL nem s
 | Quadro central | Só imagem e OSD (REC, SP e contador, se o modelo tiver). Nenhuma legenda em cima da cena |
 | Filtro | Na tela inteira, barras incluídas. O modelo escolhe qual |
 | Contexto | **Cada vídeo se explica sozinho**, como se fosse o único. Quem vê só ele não sabe que existiu outro vídeo. Nada de "mais", "outros", "de novo", "último" nas legendas, na narração e na legenda do post. O nome da pasta pode ser qualquer um, porque o espectador não vê |
-| Narração | O modelo decide. Quando há, é a voz `bm_lewis` do Kokoro, local, lendo as legendas |
+| Narração | O modelo decide se há e qual voz do Kokoro usa. O padrão é `bm_lewis`, local, lendo as legendas |
 | Preview | Obrigatório antes do render final |
 | Legenda do post | `caption.txt` em inglês em todo vídeo, com até 5 hashtags e tendências do dia |
 
@@ -60,7 +98,9 @@ Esse arquivo roda também dentro do Blender, então não pode importar PIL nem s
 engine/            compartilhado por todos os vídeos
   lib.py           nós, objetos, câmera, névoa, render
   nature.py        céu, grama, árvores, casas
-  post.py          filtro VHS, OSD, barras e legendas
+  post.py          montagem dos frames: imagem, cor, OSD, barras e legendas
+  looks.py         filtros: vhs, cctv, broadcast, webcam, probe
+  gfx.py           desenho 2D dos takes desenhados
   synth.py         mix de áudio, filtros, efeitos comuns, fita
   voice.py         narração com Kokoro
   render.py        render de um take
@@ -68,9 +108,11 @@ engine/            compartilhado por todos os vídeos
 modelos/           formatos de vídeo
   base.py          contrato de um modelo, com os valores padrão
   <modelo>/        regras, títulos e contador daquele formato
+    draw.py        desenho 2D do modelo, se tiver
 videos/<video>/    tudo que é só daquele vídeo
   timeline.py      modelo usado, takes, legendas, glitches, cores
   *.py             cenas, um arquivo por trecho
+  cards.py         takes desenhados do vídeo, se tiver
   audio.py         trilha
 render/<video>/    frames, fora do git
   preview/         frames do preview
@@ -85,7 +127,7 @@ video              comando único do projeto
 setup.sh           reinstala o tools/
 ```
 
-O nome do vídeo é numerado: `01-choose-one-planet`, `02-...`.
+O nome do vídeo é `<número>-<modelo>-<nome>`, com o modelo que o vídeo segue logo depois do número e `_` virando `-`: `05-cctv-he-is-coming`, `06-eas-lower-moon`, `01-choose-planet-choose-one-planet`. A numeração é uma só para todos os modelos.
 
 Regra de reaproveitamento: o que servir para mais de um modelo vai para `engine/`, e o que servir para vários vídeos do mesmo modelo vai para `modelos/<modelo>/`. Código de um vídeo não importa código de outro.
 
@@ -132,7 +174,7 @@ No WSL, a GPU depende do driver NVIDIA instalado no Windows. Não instale driver
 **2. Medir a CPU.** Rodar um take leve e um pesado, com a qualidade do render final:
 
 ```bash
-export VIDEO=02-four-more-planets
+export VIDEO=02-choose-planet-four-more-planets
 tools/blender/blender -b -t $(($(nproc) / 2)) -P engine/render.py -- p1b 0,25,50 20 | grep '^\['
 tools/blender/blender -b -t $(($(nproc) / 2)) -P engine/render.py -- p4c 0,25,50 20 | grep '^\['
 ```
@@ -171,6 +213,29 @@ curl -LO https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-fil
 ```
 
 Para testar sem render: `./video <video> build`. O comando imprime o tempo de cada fala.
+
+`VOICE` no `timeline.py`:
+
+| Chave | O que faz |
+|---|---|
+| `voice`, `lang`, `speed` | Voz do Kokoro, idioma (`en-gb` ou `en-us`) e velocidade. Vozes úteis: `bm_lewis` e `bm_george` (britânicas, narrador), `am_michael` e `am_onyx` (alerta), `am_adam` e `af_heart` (apresentador) |
+| `fx` | Efeito em toda fala: `tape` (padrão, fita velha), `radio` (alto-falante pequeno) ou `broadcast` (TV, sem oscilação) |
+| `radio` | Falas que saem pelo rádio mesmo com outro `fx` |
+| `names`, `name_at` | Falas extras no começo de um take, como o nome de cada opção |
+
+### Sons prontos
+
+Em `engine/synth.py`, além do `boom`, `click`, `digital`, `bell` e `chord`:
+
+| Função | Som |
+|---|---|
+| `beep(f, dur)` | Bipe curto, de contagem ou teste |
+| `attention(dur)` | Tom de atenção do EAS, 853 e 960 Hz |
+| `same_header(t0)` / `eom(t0)` | Rajadas de dados do cabeçalho e do fim de mensagem do EAS |
+| `downlink(dur)` | Dados de telemetria chegando |
+| `muzak(a, b)` | Música de previsão do tempo entre a e b |
+
+`END_TONE = False` tira o tom da tela final, e `LOOP = True` emenda o fim do áudio no começo. Os dois vêm do modelo.
 
 ### Pendências
 
