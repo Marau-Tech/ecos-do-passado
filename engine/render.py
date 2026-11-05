@@ -9,6 +9,8 @@ argv = sys.argv[sys.argv.index('--') + 1:]
 shot = argv[0]
 fr = argv[1] if len(argv) > 1 else 'all'
 samples = int(argv[2]) if len(argv) > 2 else None
+if timeline.MODELO.drawn(timeline, shot):      # take desenhado: o post faz a imagem
+    sys.exit(0)
 mod = importlib.import_module(timeline.MODELO.scene_module(timeline, shot))
 upd = getattr(mod, 'build_' + shot)()
 if upd is None:                 # take de preparo: só gera texturas

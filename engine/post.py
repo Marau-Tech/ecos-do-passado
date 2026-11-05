@@ -1,13 +1,14 @@
 import sys, os, subprocess, math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-from scipy.ndimage import uniform_filter1d, gaussian_filter1d
 from multiprocessing import Pool
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from project import ROOT, FRAMES, OUT, PREVIEW
 from timeline import *
 import timeline as TL
+from looks import LOOKS, STEP
 M = TL.MODELO
+LOOK = getattr(TL, 'LOOK', None) or M.LOOK     # o vídeo pode trocar o look do modelo
 W, H = 960, 720
 VERT = os.environ.get('VERT', '1') == '1'     # 9:16: quadro 4:3 no centro, textos nas faixas; VERT=0 gera 4:3
 CH = 1706
@@ -39,6 +40,12 @@ def load(name, idx):
     if not os.path.exists(p):
         return Image.new('RGB', (640, 480))
     return Image.open(p).convert('RGB')
+
+def source(name, rt, idx):
+    """Imagem do take: desenhada em 2D pelo modelo ou pelo cards.py do vídeo, ou o frame do render."""
+    if M.drawn(TL, name):
+        return M.card(TL, name, rt).convert('RGB')
+    return load(name, idx)
 
 def glitch_at(t):
     g = 0.0
@@ -73,9 +80,11 @@ def wrap(s, font, maxw, d):
 def overlay(img, t, shot, rt, caps, frame):
     d = ImageDraw.Draw(img)
     # OSD
-    if frame % 30 < 20:
+    rec = M.rec_label(TL, shot)
+    if M.REC_DOT and frame % 30 < 20:
         d.ellipse((40, 35, 64, 59), fill=(0, 0, 0)); d.ellipse((43, 38, 61, 56), fill=(225, 25, 20))
-    d.text((72, 32), M.rec_label(TL, shot), font=F_OSD, fill=(240, 240, 230), stroke_width=3, stroke_fill=(0, 0, 0))
+    if rec is not None:
+        d.text((72 if M.REC_DOT else 42, 32), rec, font=F_OSD, fill=(240, 240, 230), stroke_width=3, stroke_fill=(0, 0, 0))
     cnt = M.counter(TL, t)
     if cnt is not None:
         d.text((W - 42, 32), cnt, font=F_OSD, fill=(240, 240, 230), anchor='ra', stroke_width=3, stroke_fill=(0, 0, 0))
@@ -129,102 +138,10 @@ def bars(img, shot, rt, caps):
             else:
                 typed(wrap(s, F_VCAP, W - 230, d), F_VCAP, Y0 + H + 80, 62, n)
 
-def vhs(a, n, g):
-    rs = np.random.RandomState(n * 7 + 1)
-    Hh, Ww, _ = a.shape
-    Y = a @ np.array([.299, .587, .114], np.float32)
-    I = a @ np.array([.596, -.274, -.322], np.float32)
-    Q = a @ np.array([.211, -.523, .312], np.float32)
-    # banda limitada: luma macia + anel de nitidez, croma muito borrado e deslocado
-    Yb = uniform_filter1d(Y, 3, axis=1)
-    Y = Yb + 0.75 * (Yb - gaussian_filter1d(Yb, 3.2, axis=1))
-    I = np.roll(uniform_filter1d(I, 19, axis=1), 5, axis=1)
-    Q = np.roll(uniform_filter1d(Q, 25, axis=1), 6, axis=1)
-    I = np.repeat(I[::2], 2, 0)[:Hh]; Q = np.repeat(Q[::2], 2, 0)[:Hh]
-    rows = np.arange(Hh)
-    # jitter de linha
-    knots = rs.randn(Hh // 24 + 2)
-    off = np.interp(rows, np.arange(len(knots)) * 24, knots) * (0.8 + 2.5 * g)
-    off += rs.randn(Hh) * 0.35
-    # faixa de tracking que desce devagar
-    by = (n * 3.1) % (Hh * 1.8) - Hh * 0.4
-    bw = 26 + 90 * g
-    band = np.exp(-((rows - by) / bw) ** 2)
-    off += band * rs.randn(Hh) * (2.5 + 30 * g)
-    # head switching no rodapé
-    hs = np.clip((rows - (Hh - 16)) / 16, 0, 1)
-    off += hs ** 2 * (18 + 8 * rs.randn())
-    if g > 0.3:
-        off += np.sin(rows * 0.035 + n * 1.7) * 26 * g
-    idx = (np.arange(Ww)[None, :] + np.round(off).astype(int)[:, None]) % Ww
-    Y = np.take_along_axis(Y, idx, 1); I = np.take_along_axis(I, idx, 1); Q = np.take_along_axis(Q, idx, 1)
-    # ruído
-    nz = gaussian_filter1d(rs.randn(Hh, Ww).astype(np.float32), 1.1, axis=1)
-    Y = Y + nz * (0.040 + 0.05 * g + 0.10 * band[:, None] + 0.25 * hs[:, None])
-    cn = rs.randn(Hh // 8 + 1, Ww // 16 + 1).astype(np.float32)
-    cn = np.repeat(np.repeat(cn, 8, 0), 16, 1)[:Hh, :Ww]
-    I = I + uniform_filter1d(cn, 21, axis=1) * 0.018
-    Q = Q + uniform_filter1d(cn[::-1], 21, axis=1) * 0.018
-    # dropouts
-    for _ in range(rs.poisson(0.5 + 6 * g)):
-        y = rs.randint(Hh); x = rs.randint(Ww); L = rs.randint(30, 260)
-        Y[y:y + rs.randint(1, 3), x:x + L] = 0.92 + rs.rand() * 0.08
-    # neve em glitch forte
-    if g > 0.75:
-        k = min(1.0, (g - 0.75) * 3.2)
-        snow = np.repeat(rs.rand(Hh // 2 + 1, Ww).astype(np.float32), 2, 0)[:Hh]
-        Y = Y * (1 - k) + snow * k; I *= 1 - k; Q *= 1 - k
-    if g > 0.55:                       # rolagem vertical
-        sft = int(rs.randint(-140, 140) * g)
-        Y = np.roll(Y, sft, 0); I = np.roll(I, sft, 0); Q = np.roll(Q, sft, 0)
-    # linhas e vinheta
-    Y = Y * (1 - 0.07 * (rows % 2))[:, None]
-    xx = np.linspace(-1, 1, Ww)[None, :]; yy = np.linspace(-1, 1, Hh)[:, None]
-    Y = Y * (1 - 0.30 * (xx ** 2 * 0.8 + yy ** 2 * 0.8) ** 1.4)
-    r = Y + .956 * I + .621 * Q; gg = Y - .272 * I - .647 * Q; b = Y - 1.106 * I + 1.703 * Q
-    return np.clip(np.stack([r, gg, b], -1), 0, 1)
 
-def cctv(a, n, g):
-    """Câmera de segurança: monocromática, granulada e com compressão. Fora de glitch, a imagem fica estável."""
-    n //= 2                                      # a câmera grava a 15 fps
-    rs = np.random.RandomState(n * 7 + 1)
-    Hh, Ww, _ = a.shape
-    Y = a @ np.array([.299, .587, .114], np.float32)
-    # compressão: detalhe vira bloco
-    B = 8; hh, ww = Hh // B * B, Ww // B * B
-    blk = Y[:hh, :ww].reshape(hh // B, B, ww // B, B).mean((1, 3))
-    Y[:hh, :ww] = Y[:hh, :ww] * 0.7 + np.repeat(np.repeat(blk, B, 0), B, 1) * 0.3
-    Y = uniform_filter1d(uniform_filter1d(Y, 3, axis=1), 2, axis=0)
-    # ruído de sensor, mais forte no escuro
-    nz = np.repeat(np.repeat(rs.randn(Hh // 2 + 1, Ww // 2 + 1).astype(np.float32), 2, 0), 2, 1)[:Hh, :Ww]
-    Y = Y + nz * (0.018 + 0.036 * np.clip(1 - Y * 2.2, 0, 1))
-    rows = np.arange(Hh)
-    # interferência lenta do cabo
-    by = (n * 2.3) % (Hh * 1.5) - Hh * 0.25
-    Y = Y * (1 + 0.035 * np.exp(-((rows - by) / 70) ** 2))[:, None]
-    if g > 0:
-        for _ in range(int(3 + 16 * g)):         # faixas deslocadas
-            y0 = rs.randint(Hh); h = rs.randint(6, 70)
-            Y[y0:y0 + h] = np.roll(Y[y0:y0 + h], int(rs.randint(-260, 260) * g), 1)
-        for _ in range(int(34 * g)):             # blocos corrompidos
-            y0 = rs.randint(Hh // 16) * 16; x0 = rs.randint(Ww // 16) * 16
-            h = 16 * rs.randint(1, 4); w = 16 * rs.randint(1, 10)
-            ys = rs.randint(Hh // 16) * 16; xs = rs.randint(Ww // 16) * 16
-            src = Y[ys:ys + h, xs:xs + w]
-            Y[y0:y0 + src.shape[0], x0:x0 + src.shape[1]] = src[:Hh - y0, :Ww - x0]
-        if g > 0.7:                              # perda de sinal
-            k = min(1.0, (g - 0.7) * 3.0)
-            snow = np.repeat(rs.rand(Hh // 4 + 1, Ww).astype(np.float32), 4, 0)[:Hh]
-            Y = Y * (1 - k) + snow * k * 0.7
-    # linhas e vinheta
-    Y = Y * (1 - 0.05 * (rows % 2))[:, None]
-    xx = np.linspace(-1, 1, Ww)[None, :]; yy = np.linspace(-1, 1, Hh)[:, None]
-    Y = Y * (1 - 0.34 * (xx ** 2 * 0.8 + yy ** 2 * 0.8) ** 1.4)
-    return np.clip(Y[..., None] * np.array([0.90, 1.0, 0.94], np.float32), 0, 1)
-
-LOOKS = {'vhs': vhs, 'cctv': cctv}
 
 def make_frame(n):
+    n -= n % STEP.get(LOOK, 1)
     t = n / FPS_OUT
     shot, rt, dur, caps = shot_at(t)
     g = glitch_at(t)
@@ -237,20 +154,22 @@ def make_frame(n):
     else:
         sub = [s for s in SUBLIM if s[0] <= t < s[0] + 1.5 / FPS_OUT]
         if sub:
-            src = load(sub[0][1], sub[0][2]); gk = SUBLIM_GRADE
+            src = source(sub[0][1], sub[0][2] / FPS_SRC, sub[0][2]); gk = SUBLIM_GRADE; flat = M.drawn(TL, sub[0][1])
         else:
             idx = min(int(rt * FPS_SRC), int(round(dur * FPS_SRC)) - 1)
-            src = load(shot, idx); gk = key
-        im = src.resize((W, H), Image.BICUBIC)
-        a = grade(np.asarray(im, np.float32) / 255, gk)
-        a = frame_fx(a, shot, rt)
-        im = Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8))
+            src = source(shot, rt, idx); gk = key; flat = M.drawn(TL, shot)
+        im = src if src.size == (W, H) else src.resize((W, H), Image.BICUBIC)
+        if not flat:                       # take desenhado já sai com a cor final
+            a = grade(np.asarray(im, np.float32) / 255, gk)
+            a = frame_fx(a, shot, rt)
+            im = Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8))
+        im = M.paint(TL, shot, rt, im)
         im = overlay(im, t, shot, rt, caps, n)
         if VERT:
             c = Image.new('RGB', (W, CH), (4, 4, 6))
             c.paste(im, (0, Y0)); bars(c, shot, rt, caps); im = c
         a = np.asarray(im, np.float32) / 255
-    a = LOOKS[M.LOOK](a.astype(np.float32), n, g)
+    a = LOOKS[LOOK](a.astype(np.float32), n, g)
     return (a * 255).astype(np.uint8)
 
 def still(n, path):

@@ -2,7 +2,7 @@
 
 Regras do roteiro em modelos/cctv/GUIA.md.
 """
-from modelos.base import FPS_OUT, FPS_SRC, labels, opens_section, big_caption, timing as _timing
+from modelos.base import FPS_OUT, FPS_SRC, REC_DOT, labels, opens_section, big_caption, timing as _timing, drawn, card, paint
 
 __all__ = ['FPS_SRC', 'FPS_OUT', 'END_SECS', 'END_TEXT', 'MIN_SECS', 'MAX_SECS', 'timing']
 
