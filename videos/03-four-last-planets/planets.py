@@ -67,17 +67,3 @@ def planet_twin(r=1.0, loc=(0, 0, 0)):
     bp = n(nt, 'ShaderNodeBump', Strength=0.8, Distance=0.03); L(nt, f.outputs['Fac'], bp.inputs['Height'])
     out(nt, principled(nt, col, 0.75, spec=0.3, normal=bp.outputs[0], emis=emis, emis_str=1.6).outputs[0])
     return sphere('p_twin', r, loc, m, 192, 96)
-
-# figura alta e magra, usada como silhueta nos trechos 2 e 3
-FIG = [(0.26, 0), (0.17, 0.5), (0.15, 1.1), (0.19, 1.42), (0.075, 1.54), (0.05, 1.6), (0.1, 1.66), (0.11, 1.8), (0.0, 1.94)]
-
-def figure(loc, yaw=0.0, s=1.0, color=(0.004, 0.004, 0.006), eyes=False):
-    root = bpy.data.objects.new('figure', None); link(root)
-    root.location = loc; root.rotation_euler.z = yaw; root.scale = (s, s, s)
-    v, t = lathe(FIG, 14)
-    body = fast_mesh('figure', v, t, simple('figm', color, 0.9), True); body.parent = root
-    if eyes:
-        em = emission('eye', (1.0, 0.96, 0.9), 40.0)
-        for dx in (-0.045, 0.045):
-            e = ico('eye', 0.016, (dx, -0.098, 1.76), em, 2); e.scale = (1.2, 0.5, 0.8); e.parent = root
-    return root

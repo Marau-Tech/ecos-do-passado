@@ -1,6 +1,6 @@
 # (shot, duração, legendas [(início, fim, texto)])
-FPS_SRC = 15
-FPS_OUT = 30
+from modelos import choose_planet as MODELO
+from modelos.choose_planet import *
 SHOTS = [
  ('intro', 5.0,  [(0.3, 5.0, 'Choose one to spend 24 hours on')]),
  ('p1a', 3.75, [(0.5, 3.75, 'The entire planet is a single building.')]),
@@ -22,19 +22,10 @@ SHOTS = [
 ]
 PLANETS = [('PLANET 1', 'THE BUILDING', 'p1a'), ('PLANET 2', 'VERDANT', 'p2a'),
            ('PLANET 3', 'ETERNAL NIGHT', 'p3a'), ('PLANET 4', 'THE HOST', 'p4a')]
-TOTAL = sum(s[1] for s in SHOTS)
-START = {}
-_t = 0.0
-for s in SHOTS:
-    START[s[0]] = _t; _t += s[1]
-END_CARD = TOTAL - 0.7          # tela final "CHOOSE."
+TOTAL, START, END_CARD = timing(SHOTS, END_SECS)
 
 # eventos de glitch: (tempo global, força, duração)
-EVENTS = []
-for name, dur, _ in SHOTS[1:]:
-    EVENTS.append((START[name], 0.45, 0.13))
-for _, _, sh in PLANETS:
-    EVENTS.append((START[sh], 1.0, 0.28))
+EVENTS = base_events(SHOTS, PLANETS, START)
 for tt in (1.35, 2.3, 3.05, 3.55):                 # apagões do corredor
     EVENTS.append((START['p1d'] + tt - 0.08, 0.7, 0.18))
 EVENTS.append((START['p2d'] + 2.05, 0.5, 0.1))
@@ -47,8 +38,6 @@ SUBLIM = [(START['p2d'] + 3.55, 'p4a', 45), (START['p2c'] + 2.9, 'p3d', 30)]
 SUBLIM_GRADE = 'p4'
 
 SECTION = 15.0                  # duração de cada trecho, usada no contador
-END_TEXT = 'CHOOSE.'
-INTRO_LABELS = [((88, 228), '1'), ((872, 212), '2'), ((96, 492), '3'), ((880, 482), '4')]
 
 GRADE = {  # saturação, contraste, tint RGB, lift
  'intro': (0.82, 1.05, (1.0, 0.98, 1.0), 0.02),

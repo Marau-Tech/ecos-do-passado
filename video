@@ -29,6 +29,9 @@ done_frames() { find "render/$VIDEO/final" -name '*.png' 2>/dev/null | wc -l; }
 render() {
   mode="$1"; shift
   mkdir -p "render/$VIDEO"; : > "render/$VIDEO/log.txt"
+  for p in $($PY -c "import project, timeline; print(*getattr(timeline, 'PREP', []))"); do
+    tools/blender/blender -b -t "$CORES" -P engine/render.py -- "$p" "$mode" 2>&1 | grep --line-buffered -E '^\[|Error|Traceback' >> "render/$VIDEO/log.txt" || true
+  done
   shots "$@" | xargs -P $BLENDERS -I{} bash -c \
     "tools/blender/blender -b -t $THREADS -P engine/render.py -- {} $mode 2>&1 | grep --line-buffered -E '^\[|Error|Traceback' >> render/$VIDEO/log.txt || true"
   if grep -qE 'Error|Traceback' "render/$VIDEO/log.txt"; then

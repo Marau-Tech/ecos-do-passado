@@ -1,7 +1,6 @@
 # (shot, duração, legendas [(início, fim, texto)])
-FPS_SRC = 15
-FPS_OUT = 30
-NAME_HOLD = 2.25               # planeta girando enquanto o narrador diz o nome, antes do zoom
+from modelos import choose_planet as MODELO
+from modelos.choose_planet import *
 SHOTS = [
  ('intro', 5.0,  [(0.3, 5.0, 'Choose one. You stay for 24 hours.')]),
  ('p1a', 6.0, [(NAME_HOLD + 0.5, 6.0, 'Every inch of this planet is edible.')]),
@@ -23,19 +22,10 @@ SHOTS = [
 ]
 PLANETS = [('PLANET 1', 'THE FEAST', 'p1a'), ('PLANET 2', 'THE WOODS', 'p2a'),
            ('PLANET 3', 'THE DEEP', 'p3a'), ('PLANET 4', 'THE CROWD', 'p4a')]
-TOTAL = sum(s[1] for s in SHOTS)
-START = {}
-_t = 0.0
-for s in SHOTS:
-    START[s[0]] = _t; _t += s[1]
-END_CARD = TOTAL - 0.7          # tela final "CHOOSE."
+TOTAL, START, END_CARD = timing(SHOTS, END_SECS)
 
 # eventos de glitch: (tempo global, força, duração)
-EVENTS = []
-for name, dur, _ in SHOTS[1:]:
-    EVENTS.append((START[name], 0.45, 0.13))
-for _, _, sh in PLANETS:
-    EVENTS.append((START[sh], 1.0, 0.28))
+EVENTS = base_events(SHOTS, PLANETS, START)
 EVENTS.append((START['p3c'] + 2.2, 0.5, 0.15))     # a forma aparece
 EVENTS.append((START['p3d'] + 2.0, 0.9, 0.3))      # a mão fecha
 EVENTS.append((START['p3d'] + 3.4, 0.8, 0.6))
@@ -46,9 +36,6 @@ EVENTS.append((END_CARD - 0.25, 1.0, 0.33))
 SUBLIM = [(START['p2d'] + 3.55, 'p4d', 40), (START['p3c'] + 2.9, 'p4d', 45)]
 SUBLIM_GRADE = 'p4'
 
-SECTION = 15.0 + NAME_HOLD       # duração de cada trecho, usada no contador
-END_TEXT = 'CHOOSE.'
-INTRO_LABELS = [((88, 228), '1'), ((872, 212), '2'), ((96, 492), '3'), ((880, 482), '4')]
 
 VOICE = {
     'voice': 'bm_lewis', 'lang': 'en-gb', 'speed': 0.95,

@@ -12,3 +12,4 @@ FRAMES = f'{RENDER}/{"preview" if PREVIEW else "final"}'
 OUT = f'{ROOT}/out/{VIDEO}'
 os.makedirs(OUT, exist_ok=True)
 sys.path.insert(0, VIDEO_DIR)
+sys.path.append(ROOT)

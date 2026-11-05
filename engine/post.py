@@ -6,6 +6,8 @@ from multiprocessing import Pool
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from project import ROOT, FRAMES, OUT, PREVIEW
 from timeline import *
+import timeline as TL
+M = TL.MODELO
 W, H = 960, 720
 VERT = os.environ.get('VERT', '1') == '1'     # 9:16: quadro 4:3 no centro, textos nas faixas; VERT=0 gera 4:3
 CH = 1706
@@ -73,40 +75,36 @@ def overlay(img, t, shot, rt, caps, frame):
     # OSD
     if frame % 30 < 20:
         d.ellipse((40, 35, 64, 59), fill=(0, 0, 0)); d.ellipse((43, 38, 61, 56), fill=(225, 25, 20))
-    d.text((72, 32), 'REC', font=F_OSD, fill=(240, 240, 230), stroke_width=3, stroke_fill=(0, 0, 0))
-    first, last = PLANETS[0][2], PLANETS[-1][2]
-    if t < START[first]:
-        cd = 24 * 3600
-    else:
-        k = min(1.0, ((t - START[first]) % SECTION) / SECTION)
-        if t >= START[last]:
-            k = min(1.0, (t - START[last]) / (END_CARD - START[last]))
-        cd = int(24 * 3600 * (1 - k))
-    d.text((W - 42, 32), f'T-{cd // 3600:02d}:{cd % 3600 // 60:02d}:{cd % 60:02d}', font=F_OSD, fill=(240, 240, 230), anchor='ra', stroke_width=3, stroke_fill=(0, 0, 0))
-    d.text((42, H - 96), f'SP  {int(t) // 60}:{int(t) % 60:02d}:{frame % 30:02d}', font=F_OSD, fill=(240, 240, 230), stroke_width=3, stroke_fill=(0, 0, 0))
-    # título do planeta
-    for a, b, sh in PLANETS:
-        if not VERT and shot == sh and 0.25 < rt < 2.6:
-            text_box(d, (W // 2, 118), a, F_BIG, 8)
-            text_box(d, (W // 2, 176), b, F_SUB, 7, fill=(255, 238, 180))
+    d.text((72, 32), M.rec_label(TL, shot), font=F_OSD, fill=(240, 240, 230), stroke_width=3, stroke_fill=(0, 0, 0))
+    cnt = M.counter(TL, t)
+    if cnt is not None:
+        d.text((W - 42, 32), cnt, font=F_OSD, fill=(240, 240, 230), anchor='ra', stroke_width=3, stroke_fill=(0, 0, 0))
+    foot = M.footer(TL, shot, t, frame)
+    if foot is not None:
+        d.text((42, H - 96), foot, font=F_OSD, fill=(240, 240, 230), stroke_width=3, stroke_fill=(0, 0, 0))
+    # título do trecho
+    if not VERT and M.opens_section(TL, shot) and 0.25 < rt < 2.6:
+        a, b = M.title(TL, shot)
+        text_box(d, (W // 2, 118), a, F_BIG, 8)
+        text_box(d, (W // 2, 176), b, F_SUB, 7, fill=(255, 238, 180))
     # legendas
     for a, b, s in caps:
         if not VERT and a <= rt < b:
             n = int((rt - a) * 45) + 1
-            font = F_INTRO if shot == 'intro' else F_CAP
+            big = M.big_caption(TL, shot)
+            font = F_INTRO if big else F_CAP
             lines = wrap(s, font, W - 150, d)
             shown = n
             y = H - 130 - (len(lines) - 1) * 44
-            if shot == 'intro': y = H // 2
+            if big: y = H // 2
             for ln in lines:
                 part = ln[:max(0, shown)]; shown -= len(ln)
                 if part:
                     x = W // 2 - d.textlength(ln, font=font) / 2
                     text_box(d, (x, y), part, font, 9, 'lm')
                 y += 46
-    if shot == 'intro':
-        for (x, y), s in INTRO_LABELS:
-            text_box(d, (x, y), s, F_NUM, 8, fill=(255, 215, 90))
+    for (x, y), s in M.labels(TL, shot):
+        text_box(d, (x, y), s, F_NUM, 8, fill=(255, 215, 90))
     return img
 
 def bars(img, shot, rt, caps):
@@ -118,14 +116,15 @@ def bars(img, shot, rt, caps):
             if part:
                 d.text((W // 2 - d.textlength(ln, font=font) / 2, y), part, font=font, fill=white, anchor='lm')
             y += step
-    if shot != 'intro':
-        a, b, _ = PLANETS[int(shot[1]) - 1]
+    ttl = M.title(TL, shot)
+    if ttl:
+        a, b = ttl
         d.text((W // 2, 290), a, font=F_VTIT, fill=white, anchor='mm')
         d.text((W // 2, 376), b, font=F_VSUB, fill=gold, anchor='mm')
     for a, b, s in caps:
         if a <= rt < b:
             n = int((rt - a) * 45) + 1
-            if shot == 'intro':
+            if M.big_caption(TL, shot):
                 typed(wrap(s, F_VINT, W - 200, d), F_VINT, 290, 84, n)
             else:
                 typed(wrap(s, F_VCAP, W - 230, d), F_VCAP, Y0 + H + 80, 62, n)
@@ -185,11 +184,51 @@ def vhs(a, n, g):
     r = Y + .956 * I + .621 * Q; gg = Y - .272 * I - .647 * Q; b = Y - 1.106 * I + 1.703 * Q
     return np.clip(np.stack([r, gg, b], -1), 0, 1)
 
+def cctv(a, n, g):
+    """Câmera de segurança: monocromática, granulada e com compressão. Fora de glitch, a imagem fica estável."""
+    n //= 2                                      # a câmera grava a 15 fps
+    rs = np.random.RandomState(n * 7 + 1)
+    Hh, Ww, _ = a.shape
+    Y = a @ np.array([.299, .587, .114], np.float32)
+    # compressão: detalhe vira bloco
+    B = 8; hh, ww = Hh // B * B, Ww // B * B
+    blk = Y[:hh, :ww].reshape(hh // B, B, ww // B, B).mean((1, 3))
+    Y[:hh, :ww] = Y[:hh, :ww] * 0.7 + np.repeat(np.repeat(blk, B, 0), B, 1) * 0.3
+    Y = uniform_filter1d(uniform_filter1d(Y, 3, axis=1), 2, axis=0)
+    # ruído de sensor, mais forte no escuro
+    nz = np.repeat(np.repeat(rs.randn(Hh // 2 + 1, Ww // 2 + 1).astype(np.float32), 2, 0), 2, 1)[:Hh, :Ww]
+    Y = Y + nz * (0.018 + 0.036 * np.clip(1 - Y * 2.2, 0, 1))
+    rows = np.arange(Hh)
+    # interferência lenta do cabo
+    by = (n * 2.3) % (Hh * 1.5) - Hh * 0.25
+    Y = Y * (1 + 0.035 * np.exp(-((rows - by) / 70) ** 2))[:, None]
+    if g > 0:
+        for _ in range(int(3 + 16 * g)):         # faixas deslocadas
+            y0 = rs.randint(Hh); h = rs.randint(6, 70)
+            Y[y0:y0 + h] = np.roll(Y[y0:y0 + h], int(rs.randint(-260, 260) * g), 1)
+        for _ in range(int(34 * g)):             # blocos corrompidos
+            y0 = rs.randint(Hh // 16) * 16; x0 = rs.randint(Ww // 16) * 16
+            h = 16 * rs.randint(1, 4); w = 16 * rs.randint(1, 10)
+            ys = rs.randint(Hh // 16) * 16; xs = rs.randint(Ww // 16) * 16
+            src = Y[ys:ys + h, xs:xs + w]
+            Y[y0:y0 + src.shape[0], x0:x0 + src.shape[1]] = src[:Hh - y0, :Ww - x0]
+        if g > 0.7:                              # perda de sinal
+            k = min(1.0, (g - 0.7) * 3.0)
+            snow = np.repeat(rs.rand(Hh // 4 + 1, Ww).astype(np.float32), 4, 0)[:Hh]
+            Y = Y * (1 - k) + snow * k * 0.7
+    # linhas e vinheta
+    Y = Y * (1 - 0.05 * (rows % 2))[:, None]
+    xx = np.linspace(-1, 1, Ww)[None, :]; yy = np.linspace(-1, 1, Hh)[:, None]
+    Y = Y * (1 - 0.34 * (xx ** 2 * 0.8 + yy ** 2 * 0.8) ** 1.4)
+    return np.clip(Y[..., None] * np.array([0.90, 1.0, 0.94], np.float32), 0, 1)
+
+LOOKS = {'vhs': vhs, 'cctv': cctv}
+
 def make_frame(n):
     t = n / FPS_OUT
     shot, rt, dur, caps = shot_at(t)
     g = glitch_at(t)
-    key = shot[:2] if shot != 'intro' else 'intro'
+    key = M.grade_key(TL, shot)
     if t >= END_CARD:
         img = Image.new('RGB', (W, CH if VERT else H), (4, 4, 6))
         d = ImageDraw.Draw(img)
@@ -211,7 +250,7 @@ def make_frame(n):
             c = Image.new('RGB', (W, CH), (4, 4, 6))
             c.paste(im, (0, Y0)); bars(c, shot, rt, caps); im = c
         a = np.asarray(im, np.float32) / 255
-    a = vhs(a.astype(np.float32), n, g)
+    a = LOOKS[M.LOOK](a.astype(np.float32), n, g)
     return (a * 255).astype(np.uint8)
 
 def still(n, path):

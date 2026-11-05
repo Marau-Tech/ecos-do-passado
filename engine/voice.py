@@ -13,7 +13,7 @@ SILENCE = 0.01
 
 def lines():
     """(início, texto) de cada fala, em ordem."""
-    out = [(START[s] + VOICE['name_at'], name) for s, name in VOICE['names'].items()]
+    out = [(START[s] + VOICE['name_at'], name) for s, name in VOICE.get('names', {}).items()]
     out += [(START[name] + c0, text) for name, _, caps in SHOTS for c0, _, text in caps]
     return sorted(out)
 
@@ -45,6 +45,15 @@ def tape_voice(x, sr, out_sr):
     return x / np.abs(x).max()
 
 
+def radio_voice(x, sr):
+    """Voz saindo de um alto-falante pequeno, com zumbido e chiado."""
+    x = sosfilt(butter(4, [550, 2300], 'band', fs=sr, output='sos'), x)
+    n = np.arange(len(x))
+    x = np.tanh(4.0 * x / np.abs(x).max()) * (0.8 + 0.2 * np.sign(np.sin(2 * np.pi * 60 * n / sr)))
+    x = x + 0.06 * np.random.RandomState(3).randn(len(x))
+    return x / np.abs(x).max()
+
+
 def track(n, sr):
     """Devolve a faixa mono da voz e os trechos (início, fim) em que há fala."""
     k = Kokoro(f'{MODEL}/kokoro-v1.0.onnx', f'{MODEL}/voices-v1.0.bin')
@@ -58,6 +67,8 @@ def track(n, sr):
         flag = '' if size <= window else '  PASSA DA JANELA'
         print(f'{t0:6.2f}s  {size:.2f}/{window:.2f}s  x{speed:.2f}  {text}{flag}')
         y = tape_voice(np.asarray(x, float), xsr, sr)
+        if text in VOICE.get('radio', ()):
+            y = radio_voice(y, sr)
         i = int(t0 * sr)
         j = min(n, i + len(y))
         v[i:j] += y[:j - i]

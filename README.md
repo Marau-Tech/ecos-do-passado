@@ -1,6 +1,6 @@
 # Analog Planetas
 
-Gerador de vídeos verticais de analog horror, no formato "escolha um planeta para passar 24 horas". Tudo é feito por código: cenas 3D, filtro VHS, trilha, legendas e narração. O projeto não usa imagens nem músicas prontas.
+Gerador de vídeos verticais de analog horror. O primeiro modelo é "escolha um planeta para passar 24 horas", e novos formatos podem reaproveitar o mesmo estilo. Tudo é feito por código: cenas 3D, filtro VHS, trilha, legendas e narração. O projeto não usa imagens nem músicas prontas.
 
 ## Como funciona
 
@@ -40,7 +40,8 @@ Os vídeos saem em `out/<video>/`.
 ## Estrutura
 
 ```
-engine/    código compartilhado: cenas, filtro, áudio e narração
+engine/    estilo compartilhado: cenas, filtro, áudio e narração
+modelos/   formatos de vídeo, como o choose_planet
 videos/    roteiro, cenas e trilha de cada vídeo
 site/      site do app do TikTok
 GUIA.md    guia completo para criar um vídeo novo

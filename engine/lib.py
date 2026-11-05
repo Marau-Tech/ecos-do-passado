@@ -1,4 +1,4 @@
-import bpy, math, random, os, sys, time
+import bpy, math, random, os, shutil, sys, time
 import numpy as np
 from project import ROOT, RENDER, FRAMES
 from mathutils import Vector, Euler, Matrix, noise
@@ -368,26 +368,81 @@ def facing(pos, target):
     d = np.asarray(target, np.float32)[:2] - np.asarray(pos, np.float32)[:, :2]
     return np.arctan2(d[:, 0], -d[:, 1])
 
+# figura alta e magra, usada como silhueta
+FIG = [(0.26, 0), (0.17, 0.5), (0.15, 1.1), (0.19, 1.42), (0.075, 1.54), (0.05, 1.6), (0.1, 1.66), (0.11, 1.8), (0.0, 1.94)]
+
+def figure(loc, yaw=0.0, s=1.0, color=(0.004, 0.004, 0.006), eyes=False):
+    root = bpy.data.objects.new('figure', None); link(root)
+    root.location = loc; root.rotation_euler.z = yaw; root.scale = (s, s, s)
+    v, t = lathe(FIG, 14)
+    body = fast_mesh('figure', v, t, simple('figm', color, 0.9), True); body.parent = root
+    if eyes:
+        em = emission('eye', (1.0, 0.96, 0.9), 40.0)
+        for dx in (-0.045, 0.045):
+            e = ico('eye', 0.016, (dx, -0.098, 1.76), em, 2); e.scale = (1.2, 0.5, 0.8); e.parent = root
+    return root
+
+HEAD_Z = 2.12
+
+def skin_mat():
+    m, nt = mat('skin')
+    tc = n(nt, 'ShaderNodeTexCoord').outputs['Object']
+    a = n(nt, 'ShaderNodeTexNoise', Scale=30.0, Detail=7.0, Roughness=0.6); L(nt, tc, a.inputs['Vector'])
+    c = ramp(nt, [(0.35, (0.42, 0.42, 0.40)), (0.65, (0.70, 0.70, 0.67))], a.outputs['Fac']).outputs[0]
+    bp = n(nt, 'ShaderNodeBump', Strength=0.5, Distance=0.006); L(nt, a.outputs['Fac'], bp.inputs['Height'])
+    out(nt, principled(nt, c, 0.5, spec=0.35, normal=bp.outputs[0]).outputs[0])
+    return m
+
+def pale_figure(loc):
+    """figura alta e magra, de braços longos; o rosto olha para -Y e gira pelo filho 'neck'"""
+    root = bpy.data.objects.new('pale', None); link(root); root.location = loc
+    neck = bpy.data.objects.new('neck', None); link(neck); neck.location = (0, 0, HEAD_Z - 0.12); neck.parent = root
+    sk = skin_mat()
+    hole = simple('hole', (0.0, 0.0, 0.0), 0.9)
+    v, t = lathe([(0.0, 1.05), (0.13, 1.1), (0.12, 1.45), (0.17, 1.8), (0.06, 1.92), (0.05, 2.0), (0.0, 2.02)], 12)
+    parts = [fast_mesh('torso', v, t, sk, True)]
+    for s_ in (-1, 1):
+        parts.append(tube('leg', [(s_ * 0.08, 0, 1.1), (s_ * 0.09, 0, 0.55), (s_ * 0.09, 0, 0.02)], [0.06, 0.045, 0.04], sk))
+        parts.append(tube('arm', [(s_ * 0.17, 0, 1.78), (s_ * 0.24, 0.02, 1.2), (s_ * 0.26, -0.03, 0.6), (s_ * 0.27, -0.05, 0.28)], [0.04, 0.03, 0.026, 0.015], sk))
+    for o in parts:
+        o.parent = root
+    z = 0.12                                                  # altura do centro da cabeça acima do pescoço
+    hd = sphere('head', 0.1, (0, 0, z), sk, 48, 32); hd.scale = (0.92, 0.96, 1.32); hd.parent = neck
+    for s_ in (-1, 1):
+        e = ico('socket', 0.0125, (s_ * 0.036, -0.09, z + 0.03), hole, 3); e.scale = (1.35, 0.5, 0.8); e.parent = neck
+        e = ico('pupil', 0.0016, (s_ * 0.034, -0.0965, z + 0.03), emission('pupil', (1, 1, 0.95), 0.9), 2); e.parent = neck
+    e = ico('nose', 0.013, (0, -0.095, z - 0.008), sk, 3); e.scale = (0.75, 0.8, 1.5); e.parent = neck
+    e = ico('mouth', 0.02, (0, -0.088, z - 0.062), hole, 3); e.scale = (2.1, 0.45, 0.2); e.parent = neck
+    return root
+
 def zoom_after(t, hold, dur):
     """progresso 0..1 de um movimento que só começa depois de hold segundos"""
     return min(1.0, max(0.0, (t - hold) / (dur - hold)))
 
 # ---------- render ----------
-def render_shot(name, update, dur, frames=None, res=None, samples=None):
+def render_shot(name, update, dur, frames=None, res=None, samples=None, force=False):
+    """Se o update devolver um estado, frames seguidos com o mesmo estado viram cópia, sem render."""
     s = bpy.context.scene
     if res: s.render.resolution_x, s.render.resolution_y = res
     if samples: s.cycles.samples = samples
     nf = int(round(dur * FPS))
     d = f'{FRAMES}/{name}'; os.makedirs(d, exist_ok=True)
     todo = frames if frames is not None else range(nf)
+    last = last_p = None
     for i in todo:
         p = f'{d}/{i:04d}.png'
-        if frames is None and os.path.exists(p): continue
         t0 = time.time()
-        update(i / FPS, i / max(1, nf - 1))
+        state = update(i / FPS, i / max(1, nf - 1))
+        if frames is None and not force and os.path.exists(p):
+            last, last_p = state, p
+            continue
+        if state is not None and state == last:
+            shutil.copyfile(last_p, p)
+            continue
         s.frame_set(i)
         s.render.filepath = p
         bpy.ops.render.render(write_still=True)
+        last, last_p = state, p
         print(f'[{name}] {i+1}/{nf} {time.time()-t0:.1f}s', flush=True)
 
 

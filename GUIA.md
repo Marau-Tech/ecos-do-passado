@@ -1,6 +1,42 @@
 # Guia: vídeos analog horror
 
-Receita baseada no vídeo "Choose one to spend 24 hours on". Vale tanto para você ler quanto para pedir ao Claude: "faz um vídeo novo seguindo o `GUIA.md`".
+Este guia vale para qualquer vídeo. O que é de um formato específico fica no guia do modelo, em `modelos/<modelo>/GUIA.md`. Para pedir ao Claude: "faz um vídeo novo do modelo choose_planet seguindo o `GUIA.md`".
+
+## Modelos
+
+| Modelo | Formato | Guia |
+|---|---|---|
+| `choose_planet` | "Choose one": 4 planetas, 24 horas, tela final "CHOOSE." | [`modelos/choose_planet/GUIA.md`](modelos/choose_planet/GUIA.md) |
+| `cctv` | Câmera de segurança sem narrador, de 40 a 120s | [`modelos/cctv/GUIA.md`](modelos/cctv/GUIA.md) |
+
+Separação:
+
+- **`engine/` é o estilo:** render, filtro VHS, OSD, barras, legendas, glitches, trilha, fita e narração. Vale para todo modelo.
+- **`modelos/<modelo>/` é o formato:** o que aparece nas barras, o contador, a abertura, a tela final e as regras do roteiro.
+- **`videos/<video>/` é o conteúdo:** falas, cenas, cores e trilha daquele vídeo.
+
+### Criar um modelo novo
+
+1. Criar `modelos/<nome>/__init__.py` com `from modelos.base import *`.
+2. Sobrescrever só as funções que mudam. A lista está em `modelos/base.py`:
+
+| Função | O que define | Padrão |
+|---|---|---|
+| `LOOK` | Filtro da imagem: `vhs` ou `cctv` | `vhs` |
+| `rec_label` | Texto ao lado da luz de gravação | `REC` |
+| `counter` | Texto do canto superior direito do OSD | Nada |
+| `footer` | Texto do canto inferior esquerdo do OSD | Tempo da fita |
+| `title` | Título e subtítulo da barra de cima | Barra vazia |
+| `opens_section` | Take que abre um trecho, para o título no modo 4:3 | Nenhum |
+| `big_caption` | Take com legenda grande na barra de cima | Nenhum |
+| `labels` | Rótulos em cima da imagem | Nenhum |
+| `grade_key` | Chave de `GRADE` do take | O nome do take |
+| `scene_module` | Arquivo que tem `build_<take>()` | O nome do take |
+
+3. Criar `modelos/<nome>/GUIA.md` com as regras do formato: abertura, estrutura, duração e o que o roteiro precisa trazer.
+4. Acrescentar o modelo na tabela acima.
+
+Esse arquivo roda também dentro do Blender, então não pode importar PIL nem scipy.
 
 ## Regras fixas
 
@@ -9,15 +45,12 @@ Receita baseada no vídeo "Choose one to spend 24 hours on". Vale tanto para voc
 | Idioma | **Inglês em tudo**: legendas, títulos, OSD e tela final |
 | Formato | 9:16, 1080×1920, 30 fps |
 | Layout | Quadro 4:3 no centro, barras pretas em cima e embaixo |
-| Barra de cima | Título do trecho (branco) e subtítulo (dourado) |
-| Barra de baixo | Legenda digitada letra por letra |
-| Quadro central | Só imagem e OSD (REC, contador, SP). Nenhuma legenda em cima da cena |
-| Filtro VHS | Na tela inteira, barras incluídas |
-| Contexto | **Cada vídeo se explica sozinho**, como se fosse o único. Quem vê só ele não sabe o que é "four more" nem que existiu outro vídeo. Nada de "mais", "outros", "de novo", "último" nas legendas, na narração e na legenda do post |
-| Abertura | **Sempre "Choose one. You stay for 24 hours."** na intro, com a regra do jogo completa. O nome da pasta pode ser numerado e ter o que quiser, porque o espectador não vê |
-| Duração | Cerca de 74s no formato atual: 5s de intro e 17,25s por item |
-| Narração | **Em todo vídeo.** Voz `bm_lewis` do Kokoro, local, lendo as legendas e o nome de cada planeta |
-| Abertura de cada planeta | Planeta girando com a câmera parada por 2,25s enquanto o narrador diz o nome. Depois vêm o zoom e a explicação |
+| Barra de cima | Título e subtítulo, se o modelo tiver |
+| Barra de baixo | Legenda digitada letra por letra, se o modelo tiver |
+| Quadro central | Só imagem e OSD (REC, SP e contador, se o modelo tiver). Nenhuma legenda em cima da cena |
+| Filtro | Na tela inteira, barras incluídas. O modelo escolhe qual |
+| Contexto | **Cada vídeo se explica sozinho**, como se fosse o único. Quem vê só ele não sabe que existiu outro vídeo. Nada de "mais", "outros", "de novo", "último" nas legendas, na narração e na legenda do post. O nome da pasta pode ser qualquer um, porque o espectador não vê |
+| Narração | O modelo decide. Quando há, é a voz `bm_lewis` do Kokoro, local, lendo as legendas |
 | Preview | Obrigatório antes do render final |
 | Legenda do post | `caption.txt` em inglês em todo vídeo, com até 5 hashtags e tendências do dia |
 
@@ -32,9 +65,12 @@ engine/            compartilhado por todos os vídeos
   voice.py         narração com Kokoro
   render.py        render de um take
   project.py       caminhos do projeto
+modelos/           formatos de vídeo
+  base.py          contrato de um modelo, com os valores padrão
+  <modelo>/        regras, títulos e contador daquele formato
 videos/<video>/    tudo que é só daquele vídeo
-  timeline.py      takes, legendas, títulos, glitches, cores
-  intro.py, p1.py  cenas (p1 a p4)
+  timeline.py      modelo usado, takes, legendas, glitches, cores
+  *.py             cenas, um arquivo por trecho
   audio.py         trilha
 render/<video>/    frames, fora do git
   preview/         frames do preview
@@ -51,13 +87,13 @@ setup.sh           reinstala o tools/
 
 O nome do vídeo é numerado: `01-choose-one-planet`, `02-...`.
 
-Regra de reaproveitamento: o que servir para mais de um vídeo vai para `engine/`. Código de um vídeo não importa código de outro.
+Regra de reaproveitamento: o que servir para mais de um modelo vai para `engine/`, e o que servir para vários vídeos do mesmo modelo vai para `modelos/<modelo>/`. Código de um vídeo não importa código de outro.
 
 ### Git
 
 Repo público: `Felipe-Meneguzzi/analog-planetas`.
 
-Versionam-se `engine/`, `videos/`, `site/`, `GUIA.md`, `video`, `setup.sh`, `requirements.txt` e os `caption.txt`. Frames, vídeos, áudio e `tools/` ficam de fora pelo `.gitignore`.
+Versionam-se `engine/`, `modelos/`, `videos/`, `site/`, `GUIA.md`, `video`, `setup.sh`, `requirements.txt` e os `caption.txt`. Frames, vídeos, áudio e `tools/` ficam de fora pelo `.gitignore`.
 
 ### Outro PC
 
@@ -175,32 +211,22 @@ Para testar sem render: `./video <video> build`. O comando imprime o tempo de ca
 
 **Antes de escrever qualquer cena, o Claude apresenta o roteiro e espera sua aprovação.** É o momento barato de mudar falas e direção, porque depois disso cada ajuste custa um novo preview. O roteiro apresentado traz:
 
-- A abertura ("Choose one. You stay for 24 hours.") e a confirmação de que nenhuma fala depende de outro vídeo.
-- Os 4 planetas, com o papel de cada um no tom do vídeo (um quase bonito, um de tensão lenta, um de susto seco, um cósmico) e sem repetir planeta de vídeo anterior.
-- Por take: a legenda exata, que também vira a fala do narrador, e o que a câmera mostra e como se move.
-- O fecho de cada trecho, a cor de cada trecho e o nome falado de cada planeta.
-- O que cada planeta exige de novo no engine (objetos, materiais, efeitos) e o que reaproveita.
+- A confirmação de que nada depende de outro vídeo.
+- Por take: a legenda exata, se houver, e o que a câmera mostra.
+- O que o guia do modelo exigir.
+- O que o vídeo exige de novo no engine (objetos, materiais, efeitos) e o que reaproveita.
 
-Você pode trocar planeta, reescrever legenda ou mudar a direção. Só com o "aprovado" o Claude cria `videos/<video>/` e segue para as cenas. Se mudar o roteiro depois de pronto o preview, avise: legenda e cor se refazem rápido, mas direção de câmera e cena pedem novo render.
+Você pode reescrever legenda ou mudar a direção. Só com o "aprovado" o Claude cria `videos/<video>/` e segue para as cenas. Se mudar o roteiro depois de pronto o preview, avise: legenda e cor se refazem rápido, mas direção de câmera e cena pedem novo render.
 
 Depois de aprovado, definir em `timeline.py`:
 
+- `MODELO`: o modelo do vídeo. As duas primeiras linhas são `from modelos import <modelo> as MODELO` e `from modelos.<modelo> import *`.
 - `SHOTS`: nome do take, duração e legendas `(início, fim, texto)`.
-- `PLANETS`: título, subtítulo e primeiro take de cada trecho.
+- `TOTAL, START, END_CARD = timing(SHOTS, segundos_da_tela_final)`.
 - `EVENTS`: glitches, com tempo, força e duração.
-- `SUBLIM`: quadros subliminares.
-- `VOICE`: voz, velocidade e o texto falado com o nome de cada planeta.
-- `NAME_HOLD`: segundos do planeta girando antes do zoom, 2,25 no padrão. Somar nas durações dos takes `p1a` a `p4a` e em `SECTION`, e começar a legenda desses takes em `NAME_HOLD + 0.5`.
-- `GRADE`, `END_TEXT`, `INTRO_LABELS`, `SECTION` e `frame_fx`: cor por trecho, tela final, números da intro, duração do trecho e efeito extra por frame.
-
-O formato que funcionou:
-
-- Abrir com a pergunta e todas as opções na tela. A frase é sempre a mesma, "Choose one. You stay for 24 hours.", e o vídeo não pode depender de ter visto outro.
-- Em cada planeta, deixar ele girando enquanto o narrador diz o nome. Só depois vêm o zoom e a explicação.
-- Mostrar cada opção em 4 takes de 3,5 a 4s, do mais distante para o mais próximo.
-- Fechar cada trecho com uma frase que vira a chave ("No visitor ever wanted to go back.").
-- Variar o tom entre as opções, porque o contraste assusta mais que quatro monstros seguidos.
-- Terminar com uma tela preta de uma palavra ("CHOOSE.").
+- `SUBLIM` e `SUBLIM_GRADE`: quadros subliminares.
+- `VOICE`: voz, idioma e velocidade.
+- `GRADE` e `frame_fx`: cor por trecho e efeito extra por frame.
 
 Legendas curtas: até 2 linhas de cerca de 26 caracteres, com frases secas no presente.
 
@@ -208,14 +234,7 @@ A narração sai do texto das legendas. O `voice.py` acelera a fala só o necess
 
 ### 2. Cenas
 
-Um arquivo por trecho, com uma função `build_<take>()` por take e um dicionário `SHOTS` com as durações. Os takes se chamam `intro` e `p1a` a `p4d`: o módulo sai do nome do take.
-
-Nos takes de planeta, a primeira linha do `update` segura o zoom até o nome terminar:
-
-```python
-def update(t, u):
-    u = zoom_after(t, NAME_HOLD, SHOTS['p1a'])
-```
+Um arquivo por trecho, com uma função `build_<take>()` por take e um dicionário `SHOTS` com as durações. O `scene_module` do modelo diz em qual arquivo cada take está.
 
 Como o quadro central é 4:3, o enquadramento atual já serve. Se um vídeo novo usar a tela vertical inteira, a câmera e o `RES` precisam mudar antes do render.
 

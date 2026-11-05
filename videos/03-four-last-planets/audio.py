@@ -1,10 +1,5 @@
 from synth import *
 
-def chord(fs, a=1.0):
-    return sum(np.sin(2 * np.pi * f * T + i) for i, f in enumerate(fs)) * a / len(fs)
-def bell(f, dur=1.4, decay=3.0):
-    n = int(dur * SR); tv = np.arange(n) / SR
-    return (np.sin(2 * np.pi * f * tv) + 0.4 * np.sin(2 * np.pi * f * 2.01 * tv) * np.exp(-tv * 4) + 0.15 * np.sin(2 * np.pi * f * 4.1 * tv) * np.exp(-tv * 9)) * np.exp(-tv * decay)
 def knock(g=1.0):
     n = int(0.35 * SR); tv = np.arange(n) / SR
     body = np.sin(2 * np.pi * 140 * tv) * np.exp(-tv * 30) + 0.5 * np.sin(2 * np.pi * 260 * tv) * np.exp(-tv * 45)
