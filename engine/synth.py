@@ -72,6 +72,58 @@ def click(g=1.0):
     n = int(0.05 * SR); tv = np.arange(n) / SR
     return (hp(rs.randn(n), 1200) * np.exp(-tv * 160) + np.sin(2 * np.pi * 180 * tv) * np.exp(-tv * 90) * 0.6) * g
 
+def beep(f=1000, dur=0.12, g=1.0, square=False):
+    """bipe curto, de contagem de filme ou de teste"""
+    n = int(dur * SR); tv = np.arange(n) / SR
+    x = np.sin(2 * np.pi * f * tv)
+    if square: x = np.sign(x)
+    return x * np.minimum(1, np.minimum(tv * 400, (dur - tv) * 400)) * g
+
+def attention(dur=8.0, g=1.0):
+    """tom de atenção do EAS: 853 e 960 Hz juntos"""
+    n = int(dur * SR); tv = np.arange(n) / SR
+    return (np.sin(2 * np.pi * 853 * tv) + np.sin(2 * np.pi * 960 * tv)) * 0.5 * np.minimum(1, np.minimum(tv * 200, (dur - tv) * 60)) * g
+
+def afsk(bits, g=1.0):
+    """bits em AFSK a 520,83 baud, como o cabeçalho SAME do EAS (marca 2083,3 Hz, espaço 1562,5 Hz)"""
+    per = SR / 520.83
+    f = np.repeat(np.where(np.asarray(bits) > 0, 2083.3, 1562.5), int(per) + 1)[:int(len(bits) * per)]
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * g
+
+def same_header(t0, g=0.35, burst=0.9):
+    """três rajadas do cabeçalho SAME com 1s de pausa; devolve quando acabam"""
+    bits = (rs.rand(int(burst * 520.83)) > 0.5)
+    for i in range(3):
+        put(afsk(bits, g), t0 + i * (burst + 1.0))
+    return t0 + 3 * burst + 2.0
+
+def eom(t0, g=0.35):
+    """fim de mensagem: três rajadas curtas"""
+    bits = (rs.rand(int(0.25 * 520.83)) > 0.5)
+    for i in range(3):
+        put(afsk(bits, g), t0 + i * 1.0)
+    return t0 + 2.25
+
+def downlink(dur, g=1.0):
+    """dados de telemetria chegando: FSK rápido abafado, com chiado de portadora"""
+    n = int(dur * SR); tv = np.arange(n) / SR
+    k = int(dur * 1200) + 2
+    f = np.repeat(np.where(rs.rand(k) > 0.5, 2400.0, 1200.0), int(SR / 1200) + 1)[:n]
+    x = np.sin(2 * np.pi * np.cumsum(f) / SR) * 0.6 + bp(rs.randn(n), 800, 3000) * 0.5
+    x = bp(x, 500, 3200) * (0.75 + 0.25 * np.sin(2 * np.pi * 3.1 * tv))
+    return x * np.minimum(1, np.minimum(tv * 40, (dur - tv) * 40)) * g
+
+def muzak(a, b, root=220.0, beat=2.4, g=1.0):
+    """música de previsão do tempo: acordes com sétima, macios, com trêmolo; devolve a faixa inteira"""
+    prog = [(0, 4, 7, 11), (-3, 0, 4, 7), (2, 5, 9, 12), (-5, -1, 2, 5)]      # Imaj7 vi7 ii7 V7, em semitons
+    x = np.zeros(N)
+    for i in range(int((b - a) / beat) + 1):
+        t0 = a + i * beat
+        fs = [root * 2 ** (st / 12) for st in prog[i % 4]]
+        x += chord(fs) * seg(t0, min(b, t0 + beat + 0.3), 0.25)
+        x += np.sin(2 * np.pi * fs[0] / 2 * T) * seg(t0, min(b, t0 + beat * 0.6), 0.05) * 0.5
+    return lp(x, 2600) * (0.85 + 0.15 * np.sin(2 * np.pi * 5 * T)) * seg(a, b, 0.4) * g
+
 def narrate(L, R):
     """abaixa a trilha enquanto o narrador fala e soma a voz depois da fita"""
     import voice
@@ -97,15 +149,18 @@ def finish():
     if END_CARD < TOTAL:
         cut = int(END_CARD * SR)
         mixL[cut:] = 0; mixR[cut:] = 0
-        n = N - cut - int(0.04 * SR); tv = np.arange(n) / SR
-        v = (np.sin(2 * np.pi * 853 * tv) + np.sin(2 * np.pi * 960 * tv)) * 0.5 * np.minimum(1, np.minimum(tv * 200, (tv[-1] - tv) * 60))
-        put(v, END_CARD + 0.03, 0.12)
+        if globals().get('END_TONE', True):
+            put(attention((N - cut) / SR - 0.04), END_CARD + 0.03, 0.12)
         add(hp(white, 2500) * 0.016 * seg(END_CARD, TOTAL, 0.01))
 
     L, R = tape(mixL), tape(mixR)
     pk = max(np.abs(L).max(), np.abs(R).max()); L, R = L / pk * 0.89, R / pk * 0.89
     if 'VOICE' in globals():
         L, R = narrate(L, R)
+    if globals().get('LOOP'):        # vídeo em loop: emenda sem estalo
+        k = int(0.03 * SR); ramp_ = np.linspace(0, 1, k)
+        for ch in (L, R):
+            ch[:k] *= ramp_; ch[-k:] *= ramp_[::-1]
     wavfile.write(f'{OUT}/audio.wav', SR, (np.stack([L, R], 1) * 32767).astype(np.int16))
     print('ok', TOTAL, 's  pico', pk, ' rms', np.sqrt((L ** 2).mean()))
     for name, dur, _ in SHOTS:
