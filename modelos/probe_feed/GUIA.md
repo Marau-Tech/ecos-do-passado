@@ -17,7 +17,7 @@ Transmissão de uma sonda espacial: as imagens chegam linha por linha no monitor
 | Duração | **De 30 a 60s.** O `timing()` recusa vídeo fora disso |
 | Glitch | **Só perda de pacote** num acontecimento: linhas pretas, repetidas ou de lixo. Sem glitch de corte |
 | Filtro | `probe`: 6 bits por canal, erros de bit soltos e fósforo de CRT |
-| Tela final | "LOSS OF SIGNAL" por 2s |
+| Tela final | "LOSS OF SIGNAL" por 2s, só com chiado (`END_TONE = False`) |
 
 ## Roteiro
 
@@ -58,3 +58,11 @@ Todos os takes de imagem ficam em `scene.py`, com `HOLD_STATES = True` e o `upda
 ## Áudio
 
 No `audio.py`, `downlink(secs)` toca os dados chegando. Coloque um em cada revelação, com a duração de `REVEAL`. Entre as imagens fica só o chiado da portadora.
+
+## Legenda do post
+
+A legenda **cita a premissa**: a sonda, o alvo e quantas imagens chegaram. "VESPER-2 reached Planet Nine and sent back 6 images."
+
+- **Pode:** a sonda, o alvo e apontar para uma imagem sem dizer o que ela tem ("Pause on image 05. What's wrong with it?"). Isso puxa comentário e faz a pessoa assistir de novo.
+- **Não pode:** o que a última imagem mostra, nem o log da virada.
+- O vídeo imita imagem real de missão: manter "Fictional transmission." e `#analoghorror`, e deixar de fora `#nasa`.

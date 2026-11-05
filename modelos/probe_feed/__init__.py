@@ -5,13 +5,14 @@ Regras do roteiro em modelos/probe_feed/GUIA.md.
 from modelos.base import *
 from modelos.base import drawn as _drawn, card as _card, paint as _paint
 
-__all__ = ['FPS_SRC', 'FPS_OUT', 'END_SECS', 'END_TEXT', 'MIN_SECS', 'MAX_SECS', 'REVEAL_AT', 'REVEAL_SECS',
+__all__ = ['FPS_SRC', 'FPS_OUT', 'END_SECS', 'END_TEXT', 'END_TONE', 'MIN_SECS', 'MAX_SECS', 'REVEAL_AT', 'REVEAL_SECS',
            'timing', 'images']
 
 LOOK = 'probe'
 MIN_SECS, MAX_SECS = 30, 60
 END_SECS = 2.0
 END_TEXT = 'LOSS OF SIGNAL'
+END_TONE = False                # a tela final fica só com o chiado, sem o tom de alerta
 REVEAL_AT, REVEAL_SECS = 0.3, 3.5    # a imagem começa a chegar em REVEAL_AT e leva REVEAL_SECS
 
 
