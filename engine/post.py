@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 from scipy.ndimage import uniform_filter1d, gaussian_filter1d
 from multiprocessing import Pool
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from project import ROOT, FRAMES, OUT
+from project import ROOT, FRAMES, OUT, PREVIEW
 from timeline import *
 W, H = 960, 720
 VERT = os.environ.get('VERT', '1') == '1'     # 9:16: quadro 4:3 no centro, textos nas faixas; VERT=0 gera 4:3
@@ -218,18 +218,20 @@ def still(n, path):
     Image.fromarray(make_frame(n)).save(path)
 
 def main():
+    step = 2 if PREVIEW else 1            # preview a 15 fps e encode rápido; o final segue em 30 fps e preset slow
+    fps = FPS_OUT // step
     total = int(TOTAL * FPS_OUT)
     outp = f'{OUT}/video_mudo.mp4'
     size = f'{W}x{CH}' if VERT else f'{W}x{H}'
     scale = '1080:1920' if VERT else '1440:1080'
     ff = subprocess.Popen([f'{ROOT}/tools/ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24',
-                           '-s', size, '-r', str(FPS_OUT), '-i', '-',
-                           '-vf', f'scale={scale}:flags=bicubic', '-c:v', 'libx264', '-crf', '25', '-preset', 'slow',
+                           '-s', size, '-r', str(fps), '-i', '-',
+                           '-vf', f'scale={scale}:flags=bicubic', '-c:v', 'libx264', '-crf', '25', '-preset', 'veryfast' if PREVIEW else 'slow',
                            '-pix_fmt', 'yuv420p', outp], stdin=subprocess.PIPE)
     with Pool(int(os.environ.get('JOBS', '10'))) as p:
-        for i, fr in enumerate(p.imap(make_frame, range(total), chunksize=4)):
+        for i, fr in enumerate(p.imap(make_frame, range(0, total, step), chunksize=4)):
             ff.stdin.write(fr.tobytes())
-            if i % 150 == 0: print(i, '/', total, flush=True)
+            if i % 150 == 0: print(i * step, '/', total, flush=True)
     ff.stdin.close(); ff.wait()
     print('ok', outp)
 
