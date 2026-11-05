@@ -6,11 +6,12 @@ import re
 from modelos.base import *
 from modelos.base import drawn as _drawn, card as _card
 
-__all__ = ['FPS_SRC', 'FPS_OUT', 'END_SECS', 'END_TEXT', 'MIN_SECS', 'MAX_SECS', 'SLATE_COUNT', 'timing']
+__all__ = ['FPS_SRC', 'FPS_OUT', 'END_SECS', 'END_TEXT', 'END_TONE', 'MIN_SECS', 'MAX_SECS', 'SLATE_COUNT', 'timing']
 
 MIN_SECS, MAX_SECS = 40, 80
 END_SECS = 1.2
 END_TEXT = 'BE SAFE.'
+END_TONE = False                # tela final sem o tom de alerta do EAS
 SLATE_COUNT = 0.8               # segundos de cada número da contagem do filme
 _CARD = re.compile(r'r(\d)$')
 

@@ -16,7 +16,7 @@ Filme educativo de segurança dos anos 80, gravado em fita: uma instituição en
 | Duração | **De 40 a 80s.** O `timing()` recusa vídeo fora disso |
 | Glitch | Leve em cada cartela de regra e forte na virada |
 | Filtro | VHS |
-| Tela final | "BE SAFE." por 1,2s. O vídeo pode trocar o `END_TEXT` |
+| Tela final | "BE SAFE." por 1,2s, sem tom (`END_TONE = False`). O vídeo pode trocar o `END_TEXT` |
 
 ## Roteiro
 

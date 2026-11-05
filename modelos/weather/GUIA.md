@@ -20,7 +20,7 @@ Boletim do tempo da TV local, de madrugada. O apresentador só aparece em voz, o
 | Duração | **De 35 a 75s.** O `timing()` recusa vídeo fora disso |
 | Glitch | Só na virada e na tela final |
 | Filtro | `broadcast` |
-| Tela final | Preta e muda por 1,2s (`END_TEXT` vazio). O vídeo pode pôr um texto, como "STAY INSIDE." |
+| Tela final | Preta e muda por 1,2s (`END_TEXT` vazio, `END_TONE = False`). O vídeo pode pôr um texto, como "STAY INSIDE." |
 
 ## Roteiro
 
@@ -44,7 +44,7 @@ Além do que o `GUIA.md` pede:
 
 - `STATION = 'WKBR 58'`, `SHOW = 'WEATHER WATCH'`, `CLOCK = 23 * 3600 + 4 * 60`, `TEMP = '54°F'`, `TITLE = ('WEATHER WATCH', 'BRIDGEFORD COUNTY')`.
 - `FORECASTS = {'fc': [('MON', 'sun', '61°', '48°'), ..., ('FRI', 'eye', '--', '--')]}`. Ícones: `sun`, `moon`, `cloud`, `rain`, `storm`, `snow`, `fog`, `eye`, `none`. `FORECAST_HEAD` muda o cabeçalho.
-- `MAPS = {'map1': {'cities': [((300, 280), 'BRIDGEFORD', '54°')], 'radar': [(520, 330, 90, 0.8)], 'sweep': True, 'banner': 'SEVERE WEATHER WARNING'}}`. As posições são em pixels do quadro de 960x720. Confira no preview se as cidades caem no lugar.
+- `MAPS = {'map1': {'cities': [((300, 280), 'BRIDGEFORD', '54°')], 'radar': [(520, 330, 90, 0.8)], 'sweep': True, 'roads': [((300, 280), (620, 450))], 'banner': 'SEVERE WEATHER WARNING'}}`. `roads` liga pontos com uma estrada. As posições são em pixels do quadro de 960x720. Confira no preview se as cidades caem no lugar.
 - `TOTAL, START, END_CARD = timing(SHOTS)`.
 - `VOICE = {'voice': 'am_adam', 'lang': 'en-us', 'speed': 1.0, 'fx': 'broadcast'}`.
 - `GRADE`: chave `scene`, ou uma por take.

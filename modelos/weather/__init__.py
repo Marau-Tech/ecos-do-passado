@@ -5,13 +5,14 @@ Regras do roteiro em modelos/weather/GUIA.md.
 from modelos.base import *
 from modelos.base import drawn as _drawn, card as _card, paint as _paint
 
-__all__ = ['FPS_SRC', 'FPS_OUT', 'END_SECS', 'END_TEXT', 'MIN_SECS', 'MAX_SECS', 'timing']
+__all__ = ['FPS_SRC', 'FPS_OUT', 'END_SECS', 'END_TEXT', 'END_TONE', 'MIN_SECS', 'MAX_SECS', 'timing']
 
 LOOK = 'broadcast'
 REC_DOT = False
 MIN_SECS, MAX_SECS = 35, 75
 END_SECS = 1.2
 END_TEXT = ''
+END_TONE = False                # tela final sem o tom de alerta do EAS
 
 
 def timing(shots, end_card=None):
