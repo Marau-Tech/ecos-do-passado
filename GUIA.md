@@ -13,6 +13,8 @@ Receita baseada no vídeo "Choose one to spend 24 hours on". Vale tanto para voc
 | Barra de baixo | Legenda digitada letra por letra |
 | Quadro central | Só imagem e OSD (REC, contador, SP). Nenhuma legenda em cima da cena |
 | Filtro VHS | Na tela inteira, barras incluídas |
+| Contexto | **Cada vídeo se explica sozinho**, como se fosse o único. Quem vê só ele não sabe o que é "four more" nem que existiu outro vídeo. Nada de "mais", "outros", "de novo", "último" nas legendas, na narração e na legenda do post |
+| Abertura | **Sempre "Choose one. You stay for 24 hours."** na intro, com a regra do jogo completa. O nome da pasta pode ser numerado e ter o que quiser, porque o espectador não vê |
 | Duração | Cerca de 74s no formato atual: 5s de intro e 17,25s por item |
 | Narração | **Em todo vídeo.** Voz `bm_lewis` do Kokoro, local, lendo as legendas e o nome de cada planeta |
 | Abertura de cada planeta | Planeta girando com a câmera parada por 2,25s enquanto o narrador diz o nome. Depois vêm o zoom e a explicação |
@@ -59,7 +61,7 @@ Versionam-se `engine/`, `videos/`, `site/`, `GUIA.md`, `video`, `setup.sh`, `req
 
 ### Outro PC
 
-Precisa de Ubuntu 24.04 ou WSL com Python 3.12.
+Precisa de Ubuntu 24.04 ou WSL com Python 3.12. Com Python 3.13 ou mais novo (Ubuntu 26.04 vem com 3.14) o `kokoro-onnx` não instala: crie o venv com 3.12 antes do `./setup.sh`, por exemplo `uv venv --python 3.12 tools/venv && tools/venv/bin/python -m ensurepip && ln -s pip3 tools/venv/bin/pip`. O `uv` pode vir de `pip install uv` num venv temporário.
 
 ```bash
 git clone git@github.com:Felipe-Meneguzzi/analog-planetas.git
@@ -101,7 +103,7 @@ tools/blender/blender -b -t $(($(nproc) / 2)) -P engine/render.py -- p4c 0,25,50
 
 O comando imprime os segundos por frame e grava em `render/<video>/final/`. Apague esses frames depois do teste.
 
-**3. Medir a GPU.** Se ela apareceu no passo 1, pedir ao Claude para ligar a GPU no `reset()` do `engine/lib.py` e repetir os mesmos comandos. Hoje o `c.device = 'CPU'` está fixo, e o `read_factory_settings` apaga as preferências, então o dispositivo precisa ser escolhido depois dele. Ignore o primeiro frame, porque ele inclui a preparação da GPU.
+**3. Medir a GPU.** Se ela apareceu no passo 1, pedir ao Claude para ligar a GPU no `reset()` do `engine/lib.py` e repetir os mesmos comandos. O `reset()` já liga a GPU (CUDA) sozinho quando existe uma, e cai na CPU quando não existe. `GPU=0` na frente do comando força a CPU. O `read_factory_settings` apaga as preferências, por isso o dispositivo é escolhido depois dele. Ignore o primeiro frame, porque ele inclui a preparação da GPU.
 
 **4. Comparar.** A CPU roda 2 Blenders ao mesmo tempo, então divida o tempo dela por 2. A GPU roda 1 só: nesse caso, trocar o `-P 2` do `render()` no `./video` para `-P 1`.
 
@@ -117,7 +119,7 @@ Comparar também um frame de cada, porque o resultado visual precisa ser o mesmo
 | PC | CPU | GPU | Tempo por frame | Usa |
 |---|---|---|---|---|
 | Principal | i5-12400F, 12 threads | GT 610, não serve para o Cycles | Cerca de 4,5s por frame, com 2 Blenders | CPU |
-| Secundário | i3 10ª geração | GTX 1660 | Falta testar | Falta testar |
+| Secundário | i5-10400F, 12 threads | GTX 1660 SUPER (CUDA) | CPU, 2 Blenders: 3,5s (p1b) e 2,5s (p4c) por frame. GPU, 2 Blenders: 2,15s e 1,9s. GPU, 3 Blenders: 2,07s e 1,53s | GPU, 3 Blenders |
 
 ### Voz do narrador
 
@@ -138,7 +140,7 @@ Para testar sem render: `./video <video> build`. O comando imprime o tempo de ca
 
 - Vídeo 2: o código e o preview já têm narração, mas o mp4 final é o antigo, de 65s, e não será refeito. O código fica como referência do padrão. Vídeo 1 segue sem narração.
 - TikTok: `./video <video> tiktok` só foi testado contra servidor falso. Falta criar o app no portal, publicar o `site/` e rodar o login.
-- PC secundário: fazer o teste de "Testar o PC novo" antes do primeiro render.
+- PC secundário: teste feito, usa a GPU com 2 Blenders (24% a 39% mais rápida que a CPU). Frame da GPU igual ao da CPU. GPU e CPU ao mesmo tempo ficou pior que a GPU sozinha, porque a GPU precisa dos threads da CPU para preparar a cena e fazer o denoise.
 
 ## Comandos
 
@@ -162,8 +164,8 @@ Para testar sem render: `./video <video> build`. O comando imprime o tempo de ca
 
 | # | Etapa | Você faz | Tempo aproximado |
 |---|---|---|---|
-| 1 | Roteiro | Passa a ideia | Minutos |
-| 2 | Cenas | Nada | Minutos |
+| 1 | Roteiro | Passa a ideia, lê o roteiro que o Claude propôs e edita falas e direção | Minutos |
+| 2 | Cenas | Nada, só depois de aprovar o roteiro | Minutos |
 | 3 | Preview | Assiste e aponta correções | Cerca de 10 min por rodada |
 | 4 | Render final | Nada | 1h15 a 1h40 para 971 frames neste PC |
 | 5 | Legenda do post | Nada | Minutos |
@@ -171,7 +173,17 @@ Para testar sem render: `./video <video> build`. O comando imprime o tempo de ca
 
 ### 1. Roteiro
 
-Criar `videos/<video>/` e definir em `timeline.py`:
+**Antes de escrever qualquer cena, o Claude apresenta o roteiro e espera sua aprovação.** É o momento barato de mudar falas e direção, porque depois disso cada ajuste custa um novo preview. O roteiro apresentado traz:
+
+- A abertura ("Choose one. You stay for 24 hours.") e a confirmação de que nenhuma fala depende de outro vídeo.
+- Os 4 planetas, com o papel de cada um no tom do vídeo (um quase bonito, um de tensão lenta, um de susto seco, um cósmico) e sem repetir planeta de vídeo anterior.
+- Por take: a legenda exata, que também vira a fala do narrador, e o que a câmera mostra e como se move.
+- O fecho de cada trecho, a cor de cada trecho e o nome falado de cada planeta.
+- O que cada planeta exige de novo no engine (objetos, materiais, efeitos) e o que reaproveita.
+
+Você pode trocar planeta, reescrever legenda ou mudar a direção. Só com o "aprovado" o Claude cria `videos/<video>/` e segue para as cenas. Se mudar o roteiro depois de pronto o preview, avise: legenda e cor se refazem rápido, mas direção de câmera e cena pedem novo render.
+
+Depois de aprovado, definir em `timeline.py`:
 
 - `SHOTS`: nome do take, duração e legendas `(início, fim, texto)`.
 - `PLANETS`: título, subtítulo e primeiro take de cada trecho.
@@ -183,7 +195,7 @@ Criar `videos/<video>/` e definir em `timeline.py`:
 
 O formato que funcionou:
 
-- Abrir com a pergunta e todas as opções na tela.
+- Abrir com a pergunta e todas as opções na tela. A frase é sempre a mesma, "Choose one. You stay for 24 hours.", e o vídeo não pode depender de ter visto outro.
 - Em cada planeta, deixar ele girando enquanto o narrador diz o nome. Só depois vêm o zoom e a explicação.
 - Mostrar cada opção em 4 takes de 3,5 a 4s, do mais distante para o mais próximo.
 - Fechar cada trecho com uma frase que vira a chave ("No visitor ever wanted to go back.").
@@ -223,7 +235,7 @@ Só seguir para a etapa 4 depois da sua aprovação.
 ./video <video> final
 ```
 
-Roda 2 Blenders em paralelo, cada um com metade dos núcleos, só na CPU, porque a GT 610 não serve. Ao fim, confere se todos os frames existem e monta o vídeo.
+Roda 3 Blenders em paralelo na GPU (cada um com um terço dos núcleos) ou 2 na CPU (metade dos núcleos cada). Usa a GPU quando o `nvidia-smi` responde e cai na CPU quando não (a GT 610 do PC principal não serve). `GPU=0 ./video ...` força a CPU e `BLENDERS=n` troca o número de Blenders. Ao fim, confere se todos os frames existem e monta o vídeo.
 
 ### 5. Legenda do post
 
