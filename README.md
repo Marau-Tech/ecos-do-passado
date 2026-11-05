@@ -1,6 +1,6 @@
 # Analog Planetas
 
-Gerador de vídeos verticais de analog horror. O primeiro modelo é "escolha um planeta para passar 24 horas", e novos formatos podem reaproveitar o mesmo estilo. Tudo é feito por código: cenas 3D, filtro VHS, trilha, legendas e narração. O projeto não usa imagens nem músicas prontas.
+Gerador de vídeos verticais de analog horror. Cada formato é um modelo, como "escolha um planeta para passar 24 horas", câmera de segurança, alerta de emergência ou previsão do tempo, e todos reaproveitam o mesmo estilo. Tudo é feito por código: cenas 3D, telas desenhadas, filtros de fita e TV, trilha, legendas e narração. O projeto não usa imagens nem músicas prontas.
 
 ## Como funciona
 
@@ -30,9 +30,9 @@ O `setup.sh` baixa o Blender, o ffmpeg e o modelo de voz para a pasta `tools/`.
 ## Uso
 
 ```bash
-./video 02-four-more-planets preview   # versão rápida, em cerca de 10 minutos
-./video 02-four-more-planets final     # render completo, em cerca de 1h30 na CPU
-./video 02-four-more-planets status    # frames prontos
+./video 02-choose-planet-four-more-planets preview   # versão rápida, em cerca de 10 minutos
+./video 02-choose-planet-four-more-planets final     # render completo, em cerca de 1h30 na CPU
+./video 02-choose-planet-four-more-planets status    # frames prontos
 ```
 
 Os vídeos saem em `out/<video>/`.
