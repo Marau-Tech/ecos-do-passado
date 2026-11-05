@@ -51,7 +51,7 @@ def forecast(tl, days, rt):
 
 def map_layer(img, spec, rt):
     """Camadas por cima do mapa renderizado: eco de radar com varredura, cidades e temperaturas.
-    spec: radar=[(x, y, raio, força)], sweep=True, cities=[((x, y), nome, temp)], banner='texto'."""
+    spec: radar=[(x, y, raio, força)], sweep=True, roads=[((x, y), (x, y))], cities=[((x, y), nome, temp)], banner='texto'."""
     img = img.copy()
     if spec.get('radar'):
         lay = Image.new('RGBA', (W, H), (0, 0, 0, 0))
@@ -63,6 +63,9 @@ def map_layer(img, spec, rt):
                     ld.ellipse((x - rr, y - rr * 0.8, x + rr, y + rr * 0.8), fill=c + (150,))
         img = Image.alpha_composite(img.convert('RGBA'), lay).convert('RGB')
     d = ImageDraw.Draw(img)
+    for a, b in spec.get('roads', ()):              # estradas por baixo das cidades
+        d.line((*a, *b), fill=(40, 40, 40), width=7)
+        d.line((*a, *b), fill=(225, 215, 190), width=3)
     if spec.get('sweep'):
         cx, cy = spec.get('center', (W // 2, H // 2))
         a = rt * 2.2
