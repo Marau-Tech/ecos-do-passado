@@ -166,8 +166,8 @@ Para testar sem render: `./video <video> build`. O comando imprime o tempo de ca
 |---|---|---|---|
 | 1 | Roteiro | Passa a ideia, lê o roteiro que o Claude propôs e edita falas e direção | Minutos |
 | 2 | Cenas | Nada, só depois de aprovar o roteiro | Minutos |
-| 3 | Preview | Assiste e aponta correções | Cerca de 10 min por rodada |
-| 4 | Render final | Nada | 1h15 a 1h40 para 971 frames neste PC |
+| 3 | Preview | Assiste e aponta correções | Cerca de 6 min por rodada |
+| 4 | Render final | Nada | 1h15 a 1h40 para 971 frames no PC principal (CPU). No secundário (GPU), 27 min para 1107 frames |
 | 5 | Legenda do post | Nada | Minutos |
 | 6 | Entrega | Assiste com som antes de postar | Minutos |
 
@@ -225,7 +225,9 @@ Como o quadro central é 4:3, o enquadramento atual já serve. Se um vídeo novo
 ./video <video> preview
 ```
 
-Renderiza 5 frames por take com 6 samples e monta com legendas, filtro, narração e áudio, como uma animação quadro a quadro. O preview mostra enquadramento, cores, ritmo e texto. O movimento e os detalhes finos só aparecem no render final.
+Renderiza 5 frames por take com 6 samples e monta com legendas, filtro, narração e áudio, como uma animação quadro a quadro. O preview sai a 15 fps e com encode rápido, e a montagem leva cerca de 4 min. O final segue em 30 fps com `preset slow`. O preview mostra enquadramento, cores, ritmo e texto. O movimento e os detalhes finos só aparecem no render final.
+
+Se só texto ou cor mudou, `PREVIEW=1 ./video <video> build` remonta sem renderizar de novo. Não rode `build` depois de `preview`, porque o `preview` já monta o vídeo.
 
 Só seguir para a etapa 4 depois da sua aprovação.
 
