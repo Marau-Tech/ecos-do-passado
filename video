@@ -13,7 +13,10 @@ cd "$(dirname "$(readlink -f "$0")")"
 export VIDEO="$1" PYTHONPATH=engine
 cmd="$2"; shift 2
 PY=tools/venv/bin/python
-CORES=$(nproc); THREADS=$((CORES / 2))
+CORES=$(nproc)
+# 3 Blenders na GPU, 2 na CPU; BLENDERS=n troca o número
+if [ "$GPU" != 0 ] && nvidia-smi -L >/dev/null 2>&1; then BLENDERS=${BLENDERS:-3}; else BLENDERS=${BLENDERS:-2}; fi
+THREADS=$((CORES / BLENDERS))
 
 shots() {
   if [ $# -gt 0 ]; then printf '%s\n' "$@"
@@ -26,7 +29,7 @@ done_frames() { find "render/$VIDEO/final" -name '*.png' 2>/dev/null | wc -l; }
 render() {
   mode="$1"; shift
   mkdir -p "render/$VIDEO"; : > "render/$VIDEO/log.txt"
-  shots "$@" | xargs -P 2 -I{} bash -c \
+  shots "$@" | xargs -P $BLENDERS -I{} bash -c \
     "tools/blender/blender -b -t $THREADS -P engine/render.py -- {} $mode 2>&1 | grep --line-buffered -E '^\[|Error|Traceback' >> render/$VIDEO/log.txt || true"
   if grep -qE 'Error|Traceback' "render/$VIDEO/log.txt"; then
     echo "Há erros em render/$VIDEO/log.txt"; grep -E 'Error|Traceback' "render/$VIDEO/log.txt" | tail -5; exit 1
