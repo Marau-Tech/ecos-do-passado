@@ -12,6 +12,15 @@ def reset(samples=24):
     s.render.engine = 'CYCLES'
     c = s.cycles
     c.device = 'CPU'
+    if os.environ.get('GPU', '1') == '1':
+        p = bpy.context.preferences.addons['cycles'].preferences
+        p.compute_device_type = 'CUDA'
+        p.get_devices()
+        gpus = [d for d in p.devices if d.type == 'CUDA']
+        for d in p.devices:
+            d.use = d in gpus
+        if gpus:
+            c.device = 'GPU'
     c.samples = samples
     c.use_adaptive_sampling = True
     c.adaptive_threshold = 0.06
