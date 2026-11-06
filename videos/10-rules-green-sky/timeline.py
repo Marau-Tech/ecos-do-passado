@@ -28,10 +28,10 @@ KNOCKS = (1.0, 1.45, 1.9, 4.4, 4.85, 5.3)   # batidas na porta, dentro do r4a
 EVENTS = [(START[f'r{k}'], 0.4, 0.15) for k in range(1, 6)]
 EVENTS += [(START['r3a'] + EXTRA_WINDOW, 0.3, 0.12),
            (START['r5a'] + 4.0, 0.8, 0.3),          # a virada
-           (START['r5a'] + 7.9, 0.9, 0.2),          # a regra 6
+           (START['r5a'] + 7.5, 0.9, 0.2),          # logo depois da regra 6, para ela ficar legível na pausa
            (END_CARD - 0.2, 0.8, 0.3)]
 # quadro subliminar: a cartela da regra 6
-SUBLIM = [(START['r5a'] + 7.95, 'r6', 0)]
+SUBLIM = [(START['r5a'] + 7.4, 'r6', 0)]          # longe do glitch da tela final, que começa em END_CARD - 0.2
 SUBLIM_GRADE = 'scene'
 
 VOICE = {'voice': 'bm_lewis', 'lang': 'en-gb', 'speed': 0.92}

@@ -33,6 +33,6 @@ for t0 in KNOCKS:
 
 # ---- a virada e a regra 6 ----
 put(boom(2.0, 60, 24, 0.7, 0.5), turn)
-put(digital(0.25, 1.0), r5a + 7.9, 0.12)
+put(digital(0.25, 1.0), r5a + 7.5, 0.12)
 
 finish()
