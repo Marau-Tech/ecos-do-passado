@@ -31,7 +31,7 @@ O que faz o formato funcionar:
 - **Regras 1 e 2 plausíveis**, quase de verdade. A 3 tem um detalhe errado. Da 4 em diante, a lógica é de outro mundo, dita com a mesma calma.
 - **A regra mais estranha é a mais curta.** "Rule 5. Do not count the windows."
 - **A última volta para a primeira.** Se a regra 1 era "Stay inside after dark", a última é "If you are reading this inside, you are already outside."
-- Detalhe para quem pausa: o número de regras na barra (`OF 6`) pode não bater com o total que aparece.
+- Detalhe para quem pausa: o número de regras na barra (`OF 6`) pode não bater com o total que aparece. `RULES_OF = 5` no `timeline.py` fixa o número da barra, e a regra 6 aparece como `RULE 6 OF 5`.
 
 ## Timeline
 

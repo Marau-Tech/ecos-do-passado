@@ -34,7 +34,7 @@ def title(tl, shot):
     k = rule_of(shot)
     if k is None:
         return None
-    return f'RULE {k} OF {len(tl.RULES)}', tl.RULES[k - 1][0]
+    return f'RULE {k} OF {getattr(tl, "RULES_OF", len(tl.RULES))}', tl.RULES[k - 1][0]
 
 
 def opens_section(tl, shot):
