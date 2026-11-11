@@ -14,6 +14,7 @@ Este guia vale para qualquer vídeo. O que é de um formato específico fica no 
 | `weather` | Previsão do tempo da TV local, de 35 a 75s | [`modelos/weather/GUIA.md`](modelos/weather/GUIA.md) |
 | `rules` | Filme de segurança dos anos 80 com regras numeradas, de 40 a 80s | [`modelos/rules/GUIA.md`](modelos/rules/GUIA.md) |
 | `glimpse` | Vislumbre sem texto e sem voz, em loop, de 6 a 15s | [`modelos/glimpse/GUIA.md`](modelos/glimpse/GUIA.md) |
+| `survive` | Simulação que parece jogo: algo no centro com vida, um perigo, aliados e o escuro que avança. A skin diz o que é cada coisa, como fogueira e chuva. Sem Blender, de 25 a 60s | [`modelos/survive/GUIA.md`](modelos/survive/GUIA.md) |
 
 Os modelos `binary` a `glimpse` vieram da pesquisa de tendências de novembro de 2026 e ainda não têm vídeo. O primeiro vídeo de cada um valida o guia: o que não funcionar no preview volta para o guia do modelo.
 
@@ -44,6 +45,8 @@ Separação:
 | `drawn` | Se o take é desenhado em 2D, sem Blender | Takes em `DRAWN` |
 | `card` | Imagem de um take desenhado | `draw_<take>(rt)` do `cards.py` do vídeo |
 | `paint` | Desenho por cima de um take, antes do OSD | `paint_<take>(img, rt)` do `cards.py`, se existir |
+| `prepare` | Roda uma vez no post, antes de abrir os processos dos frames, como uma simulação que precisa ir em ordem | Nada |
+| `hud` | Desenho na barra de baixo da tela vertical, como um placar | Nada |
 
 Para a duração, `bounded(shots, tela_final, mínimo, máximo, nome)` faz o `timing` e recusa vídeo fora da faixa do modelo. `shot_of(tl, t)` diz o take que está na tela, para o contador.
 
