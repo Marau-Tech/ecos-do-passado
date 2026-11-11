@@ -21,8 +21,9 @@ O vídeo escolhe com `SKIN = '<nome>'`. Uma skin que serve para mais de um víde
 | Skin | Centro | Perigo | Aliado | No escuro |
 |---|---|---|---|---|
 | `campfire` | Fogueira numa clareira | Chuva, que vira tempestade com relâmpagos | Brasas vindas dos cantos de cima | Silhuetas altas e uma multidão entre as árvores |
+| `planet` | Planeta pálido com escudo | Meteoros de todas as bordas (`aim`) | Esferas de energia vindas dos lados | Nada: o horror está no próprio planeta, que pulsa e racha |
 
-Ideias que a mecânica já cobre: lanterna e mariposas (`aim`), planeta e meteoros (`aim` com `anchor = 0`), vela e vento, rádio e estática, farol e neblina.
+Ideias que a mecânica já cobre: lanterna e mariposas (`aim`), vela e vento, rádio e estática, farol e neblina.
 
 ## Regras fixas
 
@@ -44,7 +45,7 @@ O vídeo troca qualquer valor com `SIM = dict(...)` no `timeline.py`. A ordem é
 |---|---|
 | `hp0`, `burn`, `until` | Vida inicial, vida que o centro perde sozinho por segundo, e o segundo em que a contagem acaba |
 | `core` | Posição, tamanho conforme a vida (`w`, `h`, `exp`), área de colisão (`anchor`, `ry`) e o ponto para onde os aliados vão (`aim`). `anchor = 0.45` é algo apoiado no chão, como uma fogueira. `anchor = 0` é algo centrado, como um planeta |
-| `threat` | `mode`: `rain` cai de cima com vento, `aim` vem das bordas mirando o centro com desvio `spread`. Também `rate` (curva de ameaças por segundo), `wind`, `speed`, `dmg` e `floor` (o chão do `rain`) |
+| `threat` | `mode`: `rain` cai de cima com vento, `aim` vem das bordas em `edges` (`t`, `b`, `l`, `r`) mirando o centro com desvio `spread`. Também `rate` (curva de ameaças por segundo), `wind`, `speed`, `dmg` e `floor` (o chão do `rain`) |
 | `ally` | Vida (`hp`, em acertos), intervalo (`gap`, curva), primeiro (`first`), pausa antes do `until` (`stop`), velocidade, balanço, faixa de altura em que nascem e ganho ao chegar (`gain0 + gain1 × vida que sobrou`) |
 | `dark` | Raio do lugar seguro: `r0 + r1 × vida` |
 | `watch` | Vigias: quantos, quando chega o primeiro e o intervalo entre eles, e o tamanho |
@@ -101,6 +102,20 @@ Uma fogueira numa clareira à noite. A chuva tem duas camadas: a fina, de fundo,
   - `lightning`: segundos dos relâmpagos.
   - `crowd`: número de figuras entre as árvores (22).
   - `stand`: figuras de pé que o vídeo põe, como `dict(at=38.6, dx=108, h=205, lean=-0.05, eyes=False)`, com `until` opcional.
+
+## Skin `planet`
+
+Um planeta pálido, cor de osso, gira devagar no meio do espaço. O escudo é a vida: azul quando está bem, vermelho e piscando abaixo de 25%, com um clarão onde o meteoro bate. As esferas de energia têm um rastro e somem em faíscas azuis quando são destruídas.
+
+O planeta pulsa como um coração desde o primeiro segundo, e o batimento é audível, grave e baixo. A cada esfera que chega, o batimento acelera e as rachaduras escuras crescem um pouco. Antes do fim, elas só brilham de leve na batida.
+
+- **Física:** dano 1,9, esferas que aguentam 2 acertos, tempestade de meteoros de 24 a 33s, fim da contagem em 36s. Perde em cerca de 37% das sementes.
+- **Venceu:** os meteoros param e o escudo fica.
+- **Perdeu:** o escudo estilhaça e os meteoros acertam a superfície.
+- **`SKIN_CFG`:**
+  - `hatch=dict(at, open)`: em `at` o planeta treme e as rachaduras se acendem. Em `open` a casca se abre num olho do tamanho do planeta, que olha de lado e, 1,1s depois, para a câmera, com a pupila dilatando e o escudo ficando vermelho. Vem com a casca estalando, um ronco que sobe e um estrondo.
+  - `glimpse`: segundos em que o olho aparece aberto num frame só. Funciona bem no pior momento, dentro de um glitch, como pista para quem assistir de novo.
+- `HUD`: `SHIELD` e `STORM ENDS IN`, com a barra azul.
 
 ## Roteiro
 
