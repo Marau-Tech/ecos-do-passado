@@ -108,3 +108,11 @@ def paint(tl, shot, rt, img):
     """Desenha por cima do take, depois da cor e antes do OSD: paint_<take>(img, rt) do cards.py do vídeo."""
     fn = getattr(_cards(), 'paint_' + shot, None)
     return fn(img, rt) if fn else img
+
+
+def prepare(tl):
+    """Roda uma vez no post, antes de abrir os processos dos frames, como uma simulação que precisa ir em ordem."""
+
+
+def hud(tl, img, t, y0):
+    """Desenha na barra de baixo da tela vertical, como um placar. y0 é o topo da barra. Só no modo 9:16."""

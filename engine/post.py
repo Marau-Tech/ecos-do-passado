@@ -167,12 +167,13 @@ def make_frame(n):
         im = overlay(im, t, shot, rt, caps, n)
         if VERT:
             c = Image.new('RGB', (W, CH), (4, 4, 6))
-            c.paste(im, (0, Y0)); bars(c, shot, rt, caps); im = c
+            c.paste(im, (0, Y0)); bars(c, shot, rt, caps); M.hud(TL, c, t, Y0 + H); im = c
         a = np.asarray(im, np.float32) / 255
     a = LOOKS[LOOK](a.astype(np.float32), n, g)
     return (a * 255).astype(np.uint8)
 
 def still(n, path):
+    M.prepare(TL)
     Image.fromarray(make_frame(n)).save(path)
 
 def main():
@@ -182,6 +183,7 @@ def main():
     outp = f'{OUT}/video_mudo.mp4'
     size = f'{W}x{CH}' if VERT else f'{W}x{H}'
     scale = '1080:1920' if VERT else '1440:1080'
+    M.prepare(TL)                         # antes do Pool: os processos herdam o que ele calcular
     ff = subprocess.Popen([f'{ROOT}/tools/ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24',
                            '-s', size, '-r', str(fps), '-i', '-',
                            '-vf', f'scale={scale}:flags=bicubic', '-c:v', 'libx264', '-crf', '25', '-preset', 'veryfast' if PREVIEW else 'slow',

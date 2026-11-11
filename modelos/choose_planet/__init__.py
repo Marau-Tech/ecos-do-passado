@@ -2,7 +2,7 @@
 
 Regras do roteiro em modelos/choose_planet/GUIA.md.
 """
-from modelos.base import FPS_OUT, FPS_SRC, LOOK, REC_DOT, footer, labels as _labels, rec_label, timing, drawn, card, paint
+from modelos.base import FPS_OUT, FPS_SRC, LOOK, REC_DOT, footer, labels as _labels, rec_label, timing, drawn, card, paint, prepare, hud
 
 __all__ = ['FPS_SRC', 'FPS_OUT', 'NAME_HOLD', 'SECTION', 'END_SECS', 'END_TEXT', 'INTRO_LABELS',
            'timing', 'base_events']
