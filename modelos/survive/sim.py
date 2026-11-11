@@ -34,6 +34,7 @@ DEFAULTS = dict(
         wind=[(0, 0)],                      # (s, px/s), só no rain
         speed=(850, 1050),
         spread=0.25,             # desvio da mira em radianos, só no aim
+        edges='tlr',             # bordas de onde vêm no aim: t (cima), b (baixo), l (esquerda), r (direita)
         dmg=2.0,                 # vida que cada ameaça tira do centro
         floor=600,               # no rain, a altura em que a ameaça bate no chão e some
     ),
@@ -125,13 +126,18 @@ class Sim:
         if th['mode'] == 'rain':
             return np.column_stack([r.uniform(-60, W + 160, n), r.uniform(-40, 0, n),
                                     np.full(n, self.wind(t)) + r.uniform(-15, 15, n), r.uniform(*th['speed'], n)])
-        # aim: de um ponto qualquer das bordas de cima, da esquerda e da direita, mirando o centro
+        # aim: de um ponto qualquer das bordas em th['edges'] (t, b, l, r), mirando o centro
         cc = self.c['core']
         _, h = self.size()
         cx, cy = cc['x'], cc['y'] - h * cc['anchor']
-        u = r.uniform(0, W + 2 * H * 0.8, n)
-        x = np.where(u < W, u, np.where(u < W + H * 0.8, -20, W + 20))
-        y = np.where(u < W, -20, (u - W) % (H * 0.8))
+        edges = th.get('edges', 'tlr')
+        lens = np.array([W if e in 'tb' else H * 0.8 for e in edges])
+        u = r.uniform(0, lens.sum(), n)
+        k = np.searchsorted(np.cumsum(lens), u, side='right')
+        off = u - np.concatenate([[0], np.cumsum(lens)])[k]
+        side = np.array(list(edges))[k]
+        x = np.select([side == 't', side == 'b', side == 'l'], [off, off, -20], W + 20)
+        y = np.select([side == 't', side == 'b'], [-20, H + 20], off + H * 0.1)
         ang = np.arctan2(cy - y, cx - x) + r.normal(0, th['spread'], n)
         sp = r.uniform(*th['speed'], n)
         return np.column_stack([x, y, np.cos(ang) * sp, np.sin(ang) * sp])
