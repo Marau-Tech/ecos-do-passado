@@ -15,6 +15,7 @@ Este guia vale para qualquer vídeo. O que é de um formato específico fica no 
 | `rules` | Filme de segurança dos anos 80 com regras numeradas, de 40 a 80s | [`modelos/rules/GUIA.md`](modelos/rules/GUIA.md) |
 | `glimpse` | Vislumbre sem texto e sem voz, em loop, de 6 a 15s | [`modelos/glimpse/GUIA.md`](modelos/glimpse/GUIA.md) |
 | `survive` | Simulação que parece jogo: algo no centro com vida, um perigo, aliados e o escuro que avança. A skin diz o que é cada coisa, como fogueira e chuva. Sem Blender, de 25 a 60s | [`modelos/survive/GUIA.md`](modelos/survive/GUIA.md) |
+| `pov` | Ecos do Passado: relato histórico em primeira pessoa, em português, de 30 a 60s, tela final "ECOS DO PASSADO" | [`modelos/pov/GUIA.md`](modelos/pov/GUIA.md) |
 
 Os modelos `binary` a `glimpse` vieram da pesquisa de tendências de novembro de 2026 e ainda não têm vídeo. O primeiro vídeo de cada um valida o guia: o que não funcionar no preview volta para o guia do modelo.
 
@@ -83,7 +84,7 @@ Um take desenhado não passa pelo Blender: o post desenha a imagem dele em 2D a 
 
 | Item | Padrão |
 |---|---|
-| Idioma | **Inglês em tudo**: legendas, títulos, OSD e tela final |
+| Idioma | **Inglês em tudo**: legendas, títulos, OSD e tela final. Exceção: o modelo `pov` (Ecos do Passado) é em português |
 | Formato | 9:16, 1080×1920, 30 fps |
 | Layout | Quadro 4:3 no centro, barras pretas em cima e embaixo |
 | Barra de cima | Título e subtítulo, se o modelo tiver |
