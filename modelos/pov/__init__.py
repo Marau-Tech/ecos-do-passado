@@ -6,7 +6,7 @@ from modelos.base import *
 
 __all__ = ['FPS_SRC', 'FPS_OUT', 'END_SECS', 'END_TEXT', 'END_TONE', 'MIN_SECS', 'MAX_SECS', 'timing', 'base_events']
 
-MIN_SECS, MAX_SECS = 30, 60
+MIN_SECS, MAX_SECS = 175, 180
 END_SECS = 1.5
 END_TEXT = 'ECOS DO PASSADO'
 END_TONE = False                # tela final em silêncio, sem o tom de alerta do EAS
