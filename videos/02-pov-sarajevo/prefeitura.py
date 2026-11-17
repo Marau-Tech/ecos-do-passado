@@ -32,8 +32,10 @@ def town_hall():
 
 def build_t6():
     cam = town_hall()
+    me = pov_body(cam)
     def update(t, u):
         walk_pov(cam, t, (0.0, 12.0, EYE), speed=0.28, pitch=-2.0, seed=12.0)
+        pov_pose(me, cam, t, speed=0.28)
         return None
     return update
 
@@ -44,8 +46,10 @@ def build_t7():
     for x, y in [(-2.0, 39.0), (2.0, 39.0), (-1.0, 43.0), (1.0, 43.0)]:
         figures.append(figure((x, y, 0), yaw=math.pi, s=1.0,
                               color=(0.035, 0.027, 0.02)))
+    me = pov_body(cam)
     def update(t, u):
         walk_pov(cam, t, (0.0, 15.0, EYE), speed=0.0, pitch=-1.0, seed=13.0)
+        pov_pose(me, cam, t)
         return None
     return update
 
@@ -60,7 +64,9 @@ def build_t8():
             wheel = sphere('departure_wheel', 0.35, (x, y, 0.5),
                            simple('departure_tire', (0.02, 0.02, 0.02), 0.9), 24, 12)
             wheel.scale = (0.35, 1.0, 1.0)
+    me = pov_body(cam)
     def update(t, u):
         walk_pov(cam, t, (0.0, 17.0, EYE), speed=0.12, pitch=-2.0, seed=14.0)
+        pov_pose(me, cam, t, speed=0.12)
         return None
     return update

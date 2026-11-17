@@ -62,16 +62,20 @@ def base_cortejo():
 
 def build_t2():
     cam = base_cortejo()
+    me = pov_body(cam)
     def update(t, u):
         walk_pov(cam, t, (0.0, 8.0, EYE), speed=0.18, pitch=-2.0, seed=8.0)
+        pov_pose(me, cam, t, speed=0.18)
         return None
     return update
 
 
 def build_t3():
     cam = base_cortejo()
+    me = pov_body(cam)
     def update(t, u):
         walk_pov(cam, t, (0.0, 10.0, EYE), speed=0.32, pitch=-2.0, seed=9.0)
+        pov_pose(me, cam, t, speed=0.32)
         return None
     return update
 
@@ -85,8 +89,11 @@ def build_t4():
     flash_mat = emission('explosion_flash', (1.0, 0.42, 0.08), 0.0)
     flash = sphere('explosion', 0.8, (0.0, 39.0, 1.2), flash_mat, 24, 12)
     flash.hide_render = True
+    me = pov_body(cam)
     def update(t, u):
         walk_pov(cam, t, (0.0, 10.0, EYE), speed=0.15, pitch=-1.5, seed=10.0)
+        # a explosão (2,5 s) faz erguer os braços diante do rosto
+        pov_pose(me, cam, t, speed=0.15, actions=[('shield', 2.55, 5.2, 0.35)])
         bomb.location = (-4.5 + 4.5 * min(1.0, t / 2.8),
                          29.0 + 8.0 * min(1.0, t / 2.8),
                          1.5 + 2.2 * min(1.0, t / 2.8))
@@ -104,8 +111,10 @@ def build_t5():
                yaw=math.pi, s=0.9, color=(0.035, 0.025, 0.02))
     smoke_mat = simple('smoke', (0.16, 0.15, 0.13), 1.0)
     smoke = sphere('smoke_cloud', 1.0, (0.0, 39.0, 2.0), smoke_mat, 24, 16)
+    me = pov_body(cam)
     def update(t, u):
         walk_pov(cam, t, (0.0, 12.0, EYE), speed=0.08, pitch=-3.0, seed=11.0)
+        pov_pose(me, cam, t, speed=0.08)
         smoke.scale = (1.0 + t * 0.12, 1.0 + t * 0.12, 0.7 + t * 0.09)
         return None
     return update

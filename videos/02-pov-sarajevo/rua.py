@@ -31,10 +31,13 @@ def build_intro():
     crowd()
 
     cam = camera((0.0, 0.0, EYE), (0.0, 12.0, EYE), 30)
+    me = pov_body(cam)
 
     def update(t, u):
+        # tira o relógio do bolso e confere a hora antes do cortejo
         walk_pov(cam, t, (0.0, 0.0, EYE),
-                 speed=0.0, pitch=-1.5, seed=2.0)
+                 speed=0.0, pitch=-1.5, seed=2.0, gaze=[(3.6, 10.4, -40.0, 1.0)])
+        pov_pose(me, cam, t, actions=[('watch', 3.0, 11.0, 0.9)])
         return None
 
     return update
@@ -48,10 +51,14 @@ def build_t1():
     crowd()
 
     cam = camera((0.0, 5.0, EYE), (0.0, 16.0, EYE), 30)
+    me = pov_body(cam)
 
     def update(t, u):
+        # olha o calçamento enquanto anda: a -67 graus o sapato da frente entra pela borda de
+        # baixo a cada passo e ainda se vê de 3 a 4 m da rua
         walk_pov(cam, t, (0.0, 5.0, EYE),
-                 speed=0.55, pitch=-2.0, seed=3.0)
+                 speed=0.55, pitch=-2.0, seed=3.0, gaze=[(5.8, 9.2, -67.0, 1.2)])
+        pov_pose(me, cam, t, speed=0.55)
         return None
 
     return update
