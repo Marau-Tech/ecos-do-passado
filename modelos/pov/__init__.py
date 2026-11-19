@@ -12,8 +12,11 @@ END_TEXT = 'ECOS DO PASSADO'
 END_TONE = False                # tela final em silêncio, sem o tom de alerta do EAS
 
 
-def timing(shots, end_card=None):
-    return bounded(shots, END_SECS if end_card is None else end_card, MIN_SECS, MAX_SECS, 'pov')
+def timing(shots, end_card=None, min_secs=None, max_secs=None):
+    """Faixa padrão de 30 a 60s; um episódio longo passa a sua (Sarajevo usa 175 a 180s)."""
+    lo = MIN_SECS if min_secs is None else min_secs
+    hi = MAX_SECS if max_secs is None else max_secs
+    return bounded(shots, END_SECS if end_card is None else end_card, lo, hi, 'pov')
 
 
 def base_events(shots, start):
