@@ -1,0 +1,98 @@
+{
+  "descricao": "Configuracoes canonicas da Fase 4.5 — reconstrucao cinematografica da explosao do take t4",
+  "padrao_producao": {
+    "res": [864, 1536],
+    "fps": 24,
+    "samples": 16,
+    "adaptive": 0.05,
+    "cycles_device": "CUDA",
+    "view_transform": "AgX",
+    "look": "AgX - Medium High Contrast",
+    "exposure": 0.4,
+    "denoiser": "OPENIMAGEDENOISE",
+    "denoising_input_passes": "RGB_ALBEDO_NORMAL"
+  },
+  "execucao": {
+    "isolada": "tools/venv/bin/python experimentos/sarajevo_fase4_5/preview_f45.py EXPLOSION 82,84,90,110,140,180",
+    "combinada": "tools/venv/bin/python experimentos/sarajevo_fase4_5/preview_f45.py ALL 36,82,84,90,110,140,180",
+    "teste_estado": "F45_CFG_OVERRIDE='{\"f45_state_test\":true}' tools/blender/blender -b -t 4 -P experimentos/sarajevo_fase4_5/render_f45.py -- NOME DIR \"\" CONFIG_JSON",
+    "teste_continuidade": "F45_CFG_OVERRIDE='{\"f45_state_test\":true,\"f45_continuity_test\":true}' tools/blender/blender -b -t 4 -P experimentos/sarajevo_fase4_5/render_f45.py -- NOME DIR \"\" CONFIG_JSON",
+    "teste_geometria": "F45_CFG_OVERRIDE='{\"f45_state_test\":true,\"f45_geometry_test\":true}' tools/blender/blender -b -t 4 -P experimentos/sarajevo_fase4_5/render_f45.py -- NOME DIR \"\" CONFIG_JSON",
+    "um_blender_por_frame": true,
+    "guarda_ram_mb": 350,
+    "espera_inicio_mb": 1500,
+    "threads": 4,
+    "renders_concorrentes": false
+  },
+  "perfis": {
+    "EXPLOSION": {
+      "base": "Fase 4.1 inalterada (veiculos, personagens e luz)",
+      "f41_explosion": true,
+      "f41_vehicle": true,
+      "f41_people": true,
+      "f41_light": true,
+      "f42_explosion": false,
+      "f42_vehicle": false,
+      "f42_characters": false,
+      "f42_light": false,
+      "f42_materials": false,
+      "f45_explosion": true
+    },
+    "ALL": {
+      "base": "Fase 4.1 + todos os refinamentos F4.2",
+      "f41_explosion": true,
+      "f41_vehicle": true,
+      "f41_people": true,
+      "f41_light": true,
+      "f42_explosion": true,
+      "f42_vehicle": true,
+      "f42_characters": true,
+      "f42_light": true,
+      "f42_materials": true,
+      "f45_explosion": true
+    }
+  },
+  "sistemas": {
+    "flash": "clarao breve e localizado (luz pt + nucleo minusculo)",
+    "fire": "nucleo compacto, linguas curtas e faiscas; desligavel com f45_fire=false",
+    "smoke": "3 dominios de Principled Volume com turbulencia multiescala; f45_smoke=false",
+    "debris": "fragmentos balisticos com impacto e repouso; f45_debris=false",
+    "dust": "poeira rasteira e dissipacao; f45_dust=false",
+    "perfil_combinado": "ALL usa todos os sistemas ativos"
+  },
+  "parametros_f45": {
+    "f45_explosion": "liga a nova explosao e curto-circuita f41_explosion.make_explosion e f42_explosion.refine",
+    "f45_volume_step_rate": 1.0,
+    "f45_volume_max_steps": 256,
+    "f45_smoke_noise_a": 2.6,
+    "f45_smoke_noise_b": 7.4,
+    "f45_smoke_voronoi": 4.6,
+    "f45_smoke_cut_lo": 0.30,
+    "f45_smoke_cut_hi": 0.66,
+    "f45_smoke_density_core": 1.35,
+    "f45_smoke_density_body": 1.05,
+    "f45_smoke_density_plume": 0.55,
+    "f45_anisotropy": 0.45,
+    "f45_fire_count": 22,
+    "f45_fire_strength": 3.0,
+    "f45_fire_noise": 6.2,
+    "f45_sparks": 10,
+    "f45_debris": 48,
+    "f45_dust": 24,
+    "f45_light_peak": 3200.0,
+    "f45_flash_tau": 0.13,
+    "f45_tail_tau": 2.4,
+    "f45_tail_fraction": 0.11
+  },
+  "desativar": "f45_explosion=false no JSON de config — o wrapper volta integralmente ao visual F4.2 (e, com as flags F4.2 desligadas, ao F4.1).",
+  "contrato": {
+    "assinatura": "explosion(center, t0, age0, seed, with_blast) -> update(t)",
+    "center": [1.3, 30.5, 1.05],
+    "t0": 3.4,
+    "age0_t4": 0.0,
+    "age0_t5": 10.1,
+    "seed": 19,
+    "idade": "t + age0 - t0",
+    "estado": "puro e absoluto; nenhum +=; ordem dos frames irrelevante"
+  }
+}

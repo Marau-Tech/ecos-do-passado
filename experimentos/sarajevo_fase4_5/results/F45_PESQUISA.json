@@ -1,0 +1,40 @@
+{
+  "versao": "F45",
+  "data": "2026-11-18",
+  "objetivo": "Evoluir a F4.4 (reprovada visualmente) para uma explosão cinematográfica, realista e fisicamente coerente, sem alterar fases anteriores.",
+  "diagnostico_f44": {
+    "nuvem_lisa_clara_uniforme": "F4.4 usava apenas dois domos com densidade modulada por ruído escalar suave e contraste de densidade baixo; o envelope radial terminava na fronteira da malha, produzindo silhueta reconhecível.",
+    "silhueta_geometrica_artificial": "Domos de ico sub=3 com deformação de vértice pequena e densidade ainda alta nas bordas.",
+    "bola_de_fogo_grande": "Núcleo de fogo escalava até ~2.6 m e compartilhava o mesmo domínio do volume de fumaça, sem separação clara entre emissão e absorção.",
+    "pouca_evolucao_temporal": "Mesmos três corpos de fumaça com apenas ganho de luz e leve deslocamento; aforma dos frames 110/140/180 era quase idêntica.",
+    "artefato_preto_frame_110": "Candidatos identificados por inspeção de código: (1) fragmento com escala residual de hide() em versões antigas, (2) interseção de volume emissivo com domínio de fumaça, (3) base de poeira com material muito escuro (0.055) em contato com a nuvem. A F4.5 elimina as três causas estruturais: hide() redefine transformação canônico, o flash é minúsculo e desaparece antes de 0,4 s, e nenhum material de destroço/poeira é preto puro.",
+    "destrocos_nao_convincentes": "Impulso radial com repouso instantâneo e sem poeira de impacto individual."
+  },
+  "decisoes": {
+    "abordagem": "Cinco sistemas independentes (flash, fogo, fumaça, destroços, poeira), ativáveis por flags f45_* no JSON. Sem raymarching global, sem cache, sem simulação física.",
+    "volume": "3 domínios de Principled Volume (core, body, plume) com ruído em duas escalas + Voronoi e envelope radial que zera a densidade antes da fronteira. Núcleo escuro/denso e borda difusa/clara.",
+    "tempo": "Toda transformação, alfa, energia de luz e valor de nó de shader é função absoluta de age = t + age0 - t0. Nenhum +=; hide() restaura location/rotation/scale canônicos.",
+    "fogo": "Núcleo compacto + 22 línguas com fases, atrasos, vidas e orientações distintas; 10 faíscas balísticas. Ganho decai com tau=0.42 s, antes da fumaça dominar.",
+    "flash": "Luz pt com ataque de 0,012 s, tau=0,13 s e cauda de 11% com tau=2,4 s; núcleo emissivo minúsculo some antes de 0,4 s. Sem alterar exposição global.",
+    "destrocos": "48 fragmentos com magnitudes variadas, velocidade radial/ascendente, gravidade 9.8, rotação, repouso calculado por tempo de voo e poeira de impacto no ponto de queda.",
+    "poeira": "24 manchas irregulares que expandem rente ao solo e se dissipam em 7 s; queimadura no pavimento nunca é preta pura."
+  },
+  "compatibilidade": {
+    "contrato": "explosion(center, t0, age0, seed, with_blast) -> update(t)",
+    "center": [1.3, 30.5, 1.05],
+    "t0": 3.4,
+    "age0_t4": 0.0,
+    "age0_t5": 10.1,
+    "seed": 19,
+    "base": "F4.2 inalterada; f45_explosion=true curto-circuita f41_explosion.make_explosion e f42_explosion.refine",
+    "preservacao": "Nenhum arquivo das Fases 3.1/4.1/4.2/4.3/4.4, engine/, modelos/ ou videos/ foi alterado."
+  },
+  "validacao": {
+    "estado_estrutural_ALL": "hash A=f7410311…ded idêntico em A→B→A e após sequências fora de ordem; B diferente de A; ver logs/F45_TESTES_FINAIS.log (registro da execução local, não incluído no pacote)",
+    "continuidade_t4_t5": "continuidade_ok=true; 158 objetos f45_* comparados em age=10.1 s com hash idêntico 6a8393ee…2e08",
+    "geometria": "estrutura_valida=true; 158 objetos, 0 faces degeneradas, 0 vértices não finitos, 0 escalas/transformações inválidas",
+    "determinismo_render": "A vs A mean_abs 0.208/0.094; A vs B 30.124; razão 144.8; PNGs não idênticos bit a bit por amostragem CUDA",
+    "artefato_110": "maior componente escuro cai de 1517 px (F4.4) para 605 px (F4.5); componente original não reaparece",
+    "observacao_f41": "No perfil EXPLOSION (f42_characters=false), o patch F4.1 pré-existente _animate_rigs acumula rotação de braços com += entre chamadas de update; por isso o teste de estado canônico usa o perfil ALL, no qual F4.2 substitui esse patch por atribuição absoluta. A explosão F4.5 em si não possui estado mutável."
+  }
+}

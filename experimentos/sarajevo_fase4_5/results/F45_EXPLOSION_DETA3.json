@@ -1,0 +1,140 @@
+{
+  "aborted": false,
+  "build": {
+    "adaptive": 0.05000000074505806,
+    "blender": "4.5.15 LTS",
+    "build_seconds": 16.121,
+    "color": "AgX",
+    "cycles_device": "GPU",
+    "engine": "CYCLES",
+    "exposure": 0.4000000059604645,
+    "fps": 24,
+    "look": "AgX - Medium High Contrast",
+    "name": "F45_EXPLOSION_DETA3",
+    "pbr": {
+      "by_kind": {
+        "brass": 81,
+        "car_paint": 37,
+        "cloth": 505,
+        "cobble": 2,
+        "glass": 474,
+        "hair": 46,
+        "iron": 150,
+        "leather": 76,
+        "plaster": 8,
+        "roof": 8,
+        "skin": 187,
+        "stone_light": 246,
+        "tire": 18,
+        "wood": 130
+      },
+      "changed_slots": 1968,
+      "kept_emissive": 39
+    },
+    "resolution": [
+      864,
+      1536
+    ],
+    "samples": 16,
+    "stats": {
+      "lights": 3,
+      "materials": 45,
+      "meshes": 1168,
+      "objects": 2615,
+      "scene_frames": 324,
+      "shared_geometry": 97,
+      "take": "t4",
+      "take_duration": 13.5,
+      "triangles": 547151
+    }
+  },
+  "config": {
+    "adaptive": 0.05,
+    "bounces": 3,
+    "build_lean": true,
+    "cinematic_lights": true,
+    "clamp": 4.0,
+    "diffuse": 1,
+    "exposure": 0.4,
+    "f41_explosion": true,
+    "f41_light": true,
+    "f41_people": true,
+    "f41_vehicle": true,
+    "f42_characters": false,
+    "f42_explosion": false,
+    "f42_light": false,
+    "f42_materials": false,
+    "f42_vehicle": false,
+    "f45_explosion": true,
+    "f45_volume_max_steps": 256,
+    "f45_volume_step_rate": 1.0,
+    "fps": 24,
+    "glossy": 2,
+    "inventory": false,
+    "lean_crowd_end": 35,
+    "lean_length": 25,
+    "lean_pave_len": 35,
+    "lean_pave_near": 14,
+    "light_mode": "sky_sun",
+    "pbr": true,
+    "purge_materials": true,
+    "res": [
+      864,
+      1536
+    ],
+    "samples": 16,
+    "transmission": 1
+  },
+  "frames": {
+    "180": {
+      "aborted_low_ram": false,
+      "gpu_baseline_mb": 1163.0,
+      "gpu_delta_mb": 977.0,
+      "gpu_peak_mb": 2140.0,
+      "min_available_mb": 894.2,
+      "ok": true,
+      "peak_blender_rss_mb": 1123.4,
+      "render_seconds": 16.522,
+      "returncode": 0,
+      "wall_seconds": 37.22
+    },
+    "82": {
+      "aborted_low_ram": false,
+      "gpu_baseline_mb": 1218.0,
+      "gpu_delta_mb": 906.0,
+      "gpu_peak_mb": 2124.0,
+      "min_available_mb": 820.0,
+      "ok": true,
+      "peak_blender_rss_mb": 1145.2,
+      "render_seconds": 14.761,
+      "returncode": 0,
+      "wall_seconds": 36.06
+    },
+    "84": {
+      "aborted_low_ram": false,
+      "gpu_baseline_mb": 1163.0,
+      "gpu_delta_mb": 966.0,
+      "gpu_peak_mb": 2129.0,
+      "min_available_mb": 977.2,
+      "ok": true,
+      "peak_blender_rss_mb": 1128.3,
+      "render_seconds": 14.602,
+      "returncode": 0,
+      "wall_seconds": 35.6
+    },
+    "90": {
+      "aborted_low_ram": false,
+      "gpu_baseline_mb": 1163.0,
+      "gpu_delta_mb": 993.0,
+      "gpu_peak_mb": 2156.0,
+      "min_available_mb": 915.9,
+      "ok": true,
+      "peak_blender_rss_mb": 1148.4,
+      "render_seconds": 14.551,
+      "returncode": 0,
+      "wall_seconds": 33.92
+    }
+  },
+  "profile": "EXPLOSION",
+  "run": "F45_EXPLOSION_DETA3"
+}
